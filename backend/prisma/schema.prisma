@@ -12,15 +12,35 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String
+  password  String   
   fullName  String
   role      String   // "ADMIN", "LAWYER", "STUDENT", "PUBLIC"
+  avatar    String?  // Added back to fix errors
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
+  lawyerProfile    LawyerProfile?
+  studentProfile   StudentProfile?
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model LawyerProfile {
+  id                String   @id @default(uuid())
+  barLicenseNo      String   @unique
+  specialization    String[]
+  courtJurisdiction String[]
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model StudentProfile {
+  id          String @id @default(uuid())
+  university  String
+  yearOfStudy Int
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
 }
 
 model Case {
@@ -44,14 +64,13 @@ model Message {
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }
 
-// --- NEW SECURITY MODEL ---
 model AuditLog {
   id          String   @id @default(uuid())
-  action      String   // e.g., "CASE_FILED", "EVIDENCE_UPLOADED"
+  action      String   
   userId      String
-  targetId    String   // ID of the case or message
+  targetId    String   
   oldValue    String?  
   newValue    String?
-  hash        String   // SHA-256 fingerprint of this record
+  hash        String   
   createdAt   DateTime @default(now())
 }

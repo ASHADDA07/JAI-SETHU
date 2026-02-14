@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-// 1. Redux Imports
 import { useDispatch, useSelector } from 'react-redux';
-import { signInSuccess } from '../../redux/userSlice'; // We use this to update the user data too
+import { signInSuccess } from '../../redux/userSlice';
 import type { RootState } from '../../redux/store';
 
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { Card } from '../../components/Card';
+// 1. Updated Import to include parts
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'; 
 import { 
   User, CreditCard, Shield, Mail, Phone, MapPin, 
   Camera, Maximize2, X, Briefcase, GraduationCap,
@@ -21,7 +21,6 @@ interface ProfileProps {
 }
 
 export default function ProfileSettings({ role }: ProfileProps) {
-  // 2. Redux Hooks
   const dispatch = useDispatch();
   const { currentUser, loading: contextLoading } = useSelector((state: RootState) => state.user);
   const navigate = useNavigate();
@@ -53,18 +52,15 @@ export default function ProfileSettings({ role }: ProfileProps) {
     { id: "INV-002", date: "Jan 01, 2026", desc: "Pro Plan Subscription", amount: "₹499.00", status: "Paid" },
   ];
 
-  // 1. STRICT AUTH CHECK & LOAD DATA
   useEffect(() => {
     const token = sessionStorage.getItem('token'); 
     if (!token || !currentUser) {
-        // If Redux has no user, try to wait or redirect
         if (!contextLoading) navigate('/login');
         return;
     }
 
     const fetchProfile = async () => {
         try {
-            // In a real app, we might just use the Redux data, but fetching fresh data is safer
             const res = await axios.get(`${API_URL}/users?email=${currentUser.email}`);
             const dbUser = res.data;
             
@@ -77,8 +73,8 @@ export default function ProfileSettings({ role }: ProfileProps) {
                 courtJurisdiction: dbUser.lawyerProfile?.courtJurisdiction?.join(', ') || '',
                 university: dbUser.studentProfile?.university || '',
                 yearOfStudy: dbUser.studentProfile?.yearOfStudy || 1,
-                phone: dbUser.phone || '', // Get real phone
-location: dbUser.location || '', // Get real location
+                phone: dbUser.phone || '',
+                location: dbUser.location || '',
             }));
         } catch (err) {
             console.error("Failed to load profile", err);
@@ -90,22 +86,18 @@ location: dbUser.location || '', // Get real location
     fetchProfile();
   }, [currentUser, contextLoading, navigate]);
 
-  // 2. SAVE HANDLER (Fixed to send only relevant data)
   const handleSaveProfile = async () => {
     if (!currentUser?.id) return;
     setSaving(true);
     setMessage(null);
 
     try {
-        // 1. Base Payload (Shared Data)
         const basePayload = {
-            fullName: formData.fullName,  // Only send fullName (The DB loves this)
+            fullName: formData.fullName,
             email: formData.email,
         };
 
         let finalPayload = {};
-
-        // 2. Add Role-Specific Data
         if (role === 'lawyer') {
             finalPayload = {
                 ...basePayload,
@@ -118,24 +110,17 @@ location: dbUser.location || '', // Get real location
                 ...basePayload,
                 university: formData.university,
                 yearOfStudy: formData.yearOfStudy,
-                // Explicitly send undefined for lawyer fields so they don't overwrite/conflict
                 barLicenseNo: undefined 
             };
         } else {
-            // Public
             finalPayload = basePayload;
         }
 
         const res = await axios.put(`${API_URL}/users/${currentUser.id}`, finalPayload);
-        
-        // Update Redux Store
         dispatch(signInSuccess(res.data));
-        
         setMessage({ type: 'success', text: "Profile updated successfully!" });
     } catch (err: any) {
-        console.error(err);
-        // Show the specific error message from backend if available
-        const errorMsg = err.response?.data?.message || "Failed to save changes. (Check for duplicate data)";
+        const errorMsg = err.response?.data?.message || "Failed to save changes.";
         setMessage({ type: 'error', text: errorMsg });
     } finally {
         setSaving(false);
@@ -153,10 +138,9 @@ location: dbUser.location || '', // Get real location
   };
 
   const handleSaveCrop = (croppedImageUrl: string) => {
-    // In a real app, upload to server first. Here we update local state.
     if(currentUser) {
         const updatedUser = { ...currentUser, avatar: croppedImageUrl };
-        dispatch(signInSuccess(updatedUser)); // Update Redux
+        dispatch(signInSuccess(updatedUser));
     }
     setShowCropModal(false);
     setTempImage(null);
@@ -171,7 +155,6 @@ location: dbUser.location || '', // Get real location
 
   return (
     <DashboardLayout>
-      {/* HEADER */}
       <div className="mb-8 flex items-center justify-between">
         <div>
             <h2 className="text-3xl font-serif font-bold text-black">Account Settings</h2>
@@ -185,7 +168,6 @@ location: dbUser.location || '', // Get real location
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
         {/* LEFT: NAVIGATION */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-24">
@@ -194,7 +176,7 @@ location: dbUser.location || '', // Get real location
                   className="relative w-28 h-28 mx-auto mb-4 group cursor-pointer"
                   onClick={() => setShowImageModal(true)}
                 >
-                   <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-xl bg-judicial-black text-[#D4AF37] flex items-center justify-center font-serif font-bold text-4xl relative z-0">
+                   <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-900 text-[#D4AF37] flex items-center justify-center font-serif font-bold text-4xl relative z-0">
                       { (currentUser?.avatar?.length || 0) > 5 ? <img src={currentUser?.avatar || ''} className="w-full h-full object-cover" /> : currentUser?.fullName?.[0] }
                    </div>
                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -219,7 +201,6 @@ location: dbUser.location || '', // Get real location
 
         {/* RIGHT: CONTENT AREA */}
         <div className="lg:col-span-3 space-y-6">
-          
           {message && (
              <div className={`p-4 rounded-lg flex items-center gap-2 text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                  {message.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}
@@ -229,73 +210,77 @@ location: dbUser.location || '', // Get real location
 
           {/* --- TAB 1: PROFILE --- */}
           {activeTab === 'profile' && (
-            <Card title={role === 'lawyer' ? "Professional & Personal Info" : "Personal Information"}>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Common Fields */}
-                  <InputGroup label="Full Name" icon={User} value={formData.fullName} onChange={(e:any) => setFormData({...formData, fullName: e.target.value})} />
-                  <InputGroup label="Email Address" icon={Mail} value={formData.email} readOnly />
-                  <InputGroup label="Phone Number" icon={Phone} value={formData.phone} readOnly />
-                  <InputGroup label="Location" icon={MapPin} value={formData.location} readOnly />
+            <Card>
+               {/* 2. Using CardHeader for Titles */}
+               <CardHeader>
+                  <CardTitle>{role === 'lawyer' ? "Professional & Personal Info" : "Personal Information"}</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputGroup label="Full Name" icon={User} value={formData.fullName} onChange={(e:any) => setFormData({...formData, fullName: e.target.value})} />
+                    <InputGroup label="Email Address" icon={Mail} value={formData.email} readOnly />
+                    <InputGroup label="Phone Number" icon={Phone} value={formData.phone} readOnly />
+                    <InputGroup label="Location" icon={MapPin} value={formData.location} readOnly />
 
-                  {/* LAWYER ONLY SECTION */}
-                  {role === 'lawyer' && (
-                    <div className="md:col-span-2 bg-[#D4AF37]/5 p-4 rounded-xl border border-[#D4AF37]/20 mt-4">
-                       <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide mb-4 text-[#D4AF37]">
-                           <Briefcase size={16}/> Advocate Details
-                       </h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <InputGroup label="Bar License No" icon={Shield} value={formData.barLicenseNo} onChange={(e:any) => setFormData({...formData, barLicenseNo: e.target.value})} />
-                           <InputGroup label="Court Jurisdiction" icon={MapPin} value={formData.courtJurisdiction} onChange={(e:any) => setFormData({...formData, courtJurisdiction: e.target.value})} />
-                           <div className="md:col-span-2">
-                              <InputGroup label="Specialization (comma separated)" icon={Briefcase} value={formData.specialization} onChange={(e:any) => setFormData({...formData, specialization: e.target.value})} />
-                           </div>
-                       </div>
-                    </div>
-                  )}
+                    {role === 'lawyer' && (
+                      <div className="md:col-span-2 bg-[#D4AF37]/5 p-4 rounded-xl border border-[#D4AF37]/20 mt-4">
+                         <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide mb-4 text-[#D4AF37]">
+                             <Briefcase size={16}/> Advocate Details
+                         </h4>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <InputGroup label="Bar License No" icon={Shield} value={formData.barLicenseNo} onChange={(e:any) => setFormData({...formData, barLicenseNo: e.target.value})} />
+                             <InputGroup label="Court Jurisdiction" icon={MapPin} value={formData.courtJurisdiction} onChange={(e:any) => setFormData({...formData, courtJurisdiction: e.target.value})} />
+                             <div className="md:col-span-2">
+                                <InputGroup label="Specialization (comma separated)" icon={Briefcase} value={formData.specialization} onChange={(e:any) => setFormData({...formData, specialization: e.target.value})} />
+                             </div>
+                         </div>
+                      </div>
+                    )}
 
-                  {/* STUDENT ONLY SECTION */}
-                  {role === 'student' && (
-                    <div className="md:col-span-2 bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4">
-                       <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide mb-4 text-blue-800">
-                           <GraduationCap size={16}/> Academic Details
-                       </h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <InputGroup label="University / College" icon={GraduationCap} value={formData.university} onChange={(e:any) => setFormData({...formData, university: e.target.value})} />
-                           <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Year of Study</label>
-                                <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg bg-white">
-                                    <GraduationCap size={18} className="text-gray-400"/>
-                                    <select 
-                                        className="bg-transparent w-full text-sm font-bold text-gray-900 focus:outline-none"
-                                        value={formData.yearOfStudy}
-                                        onChange={(e) => setFormData({...formData, yearOfStudy: parseInt(e.target.value)})}
-                                    >
-                                        {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y} Year</option>)}
-                                    </select>
-                                </div>
-                           </div>
-                       </div>
-                    </div>
-                  )}
-               </div>
+                    {role === 'student' && (
+                      <div className="md:col-span-2 bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4">
+                         <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide mb-4 text-blue-800">
+                             <GraduationCap size={16}/> Academic Details
+                         </h4>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <InputGroup label="University / College" icon={GraduationCap} value={formData.university} onChange={(e:any) => setFormData({...formData, university: e.target.value})} />
+                             <div>
+                                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Year of Study</label>
+                                  <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg bg-white">
+                                      <GraduationCap size={18} className="text-gray-400"/>
+                                      <select 
+                                          className="bg-transparent w-full text-sm font-bold text-gray-900 focus:outline-none"
+                                          value={formData.yearOfStudy}
+                                          onChange={(e) => setFormData({...formData, yearOfStudy: parseInt(e.target.value)})}
+                                      >
+                                          {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y} Year</option>)}
+                                      </select>
+                                  </div>
+                             </div>
+                         </div>
+                      </div>
+                    )}
+                 </div>
 
-               {/* --- SAVE BUTTON --- */}
-               <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-                  <button 
-                    onClick={handleSaveProfile} 
-                    disabled={saving}
-                    className="px-8 py-3 bg-black text-white rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50"
-                  >
-                      {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                      Save Changes
-                  </button>
-               </div>
+                 <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                    <button 
+                      onClick={handleSaveProfile} 
+                      disabled={saving}
+                      className="px-8 py-3 bg-black text-white rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50"
+                    >
+                        {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        Save Changes
+                    </button>
+                 </div>
+               </CardContent>
             </Card>
           )}
 
           {/* --- TAB 2: SECURITY --- */}
           {activeTab === 'security' && (
-             <Card title="Security Settings">
+             <Card>
+                <CardHeader><CardTitle>Security Settings</CardTitle></CardHeader>
+                <CardContent>
                    <div className="text-center py-10">
                        <Lock className="mx-auto mb-4 text-gray-300" size={48} />
                        <h3 className="font-bold text-gray-900">Password Management</h3>
@@ -304,6 +289,7 @@ location: dbUser.location || '', // Get real location
                            Reset Password Email
                        </button>
                    </div>
+                </CardContent>
              </Card>
           )}
 
@@ -324,28 +310,30 @@ location: dbUser.location || '', // Get real location
                   </div>
                </div>
                
-               <Card title="Payment History">
-                  <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                         <tbody className="divide-y divide-gray-100">
-                            {transactions.map((tx) => (
-                               <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                                  <td className="py-4 pl-2 font-mono text-gray-600">{tx.id}</td>
-                                  <td className="py-4 font-bold text-gray-900">{tx.amount}</td>
-                                  <td className="py-4"><span className="px-2 py-1 rounded bg-green-50 text-green-700 text-xs font-bold">{tx.status}</span></td>
-                               </tr>
-                            ))}
-                         </tbody>
-                      </table>
-                  </div>
+               <Card>
+                  <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                           <tbody className="divide-y divide-gray-100">
+                              {transactions.map((tx) => (
+                                 <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="py-4 pl-2 font-mono text-gray-600">{tx.id}</td>
+                                    <td className="py-4 font-bold text-gray-900">{tx.amount}</td>
+                                    <td className="py-4"><span className="px-2 py-1 rounded bg-green-50 text-green-700 text-xs font-bold">{tx.status}</span></td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                    </div>
+                  </CardContent>
                </Card>
             </>
           )}
-
         </div>
       </div>
 
-      {/* --- MODAL: IMAGE CROP --- */}
+      {/* MODALS REMAIN THE SAME... */}
       {showImageModal && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
           <button onClick={() => setShowImageModal(false)} className="absolute top-6 right-6 text-white"><X size={24} /></button>
@@ -364,11 +352,11 @@ location: dbUser.location || '', // Get real location
       {showCropModal && tempImage && (
         <ImageCropper src={tempImage} onCancel={() => { setShowCropModal(false); setTempImage(null); }} onSave={handleSaveCrop}/>
       )}
-
     </DashboardLayout>
   );
 }
 
+// HELPERS (Unchanged)
 function ImageCropper({ src, onCancel, onSave }: { src: string, onCancel: () => void, onSave: (url: string) => void }) {
     return (
         <div className="fixed inset-0 z-[110] bg-black flex flex-col items-center justify-center p-4">

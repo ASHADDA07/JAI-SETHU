@@ -1,21 +1,25 @@
-import { Controller, Get, Patch, Param, Body, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { CasesService } from './cases.service';
+// Updated this path - check if your guard is in 'src/auth/jwt-auth.guard.ts' instead
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'; 
 
 @Controller('cases')
 export class CasesController {
   constructor(private readonly casesService: CasesService) {}
 
-  @Get('pending')
-  async getPendingCases(@Query('lawyerId') lawyerId: string) {
-    if (!lawyerId) throw new BadRequestException('lawyerId is required');
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  create(@Body() createCaseDto: any, @Request() req: any) {
+    return this.casesService.create(createCaseDto, req.user.userId);
+  }
+
+  @Get('pending/:lawyerId')
+  getPending(@Param('lawyerId') lawyerId: string) {
     return this.casesService.getPendingCases(lawyerId);
   }
 
   @Patch(':id/status')
-  async updateCaseStatus(
-    @Param('id') caseId: string,
-    @Body() body: { status: 'OPEN' | 'CLOSED' | 'ARCHIVED' },
-  ) {
+  updateStatus(@Param('id') caseId: string, @Body() body: { status: string }) {
     return this.casesService.updateCaseStatus(caseId, body.status);
   }
 }

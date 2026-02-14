@@ -5,38 +5,35 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // POST http://localhost:3000/users (Create User)
   @Post()
-  async create(@Body() userData: { email: string; fullName: string; role: any; passwordHash: string }) {
+  async create(@Body() userData: { email: string; fullName: string; role: any; password: string }) {
     return this.usersService.createUser({
         email: userData.email,
         fullName: userData.fullName,
         role: userData.role,
-        passwordHash: userData.passwordHash || "default_hash_for_now", 
+        password: userData.password || "default_password_for_now", // Changed passwordHash to password
     });
   }
+
   @Get('associates')
   async getAssociates(@Query('excludeUserId') excludeUserId?: string) {
     return this.usersService.findAssociates(excludeUserId);
   }
+
+  // Combined the two 'lawyers' endpoints into one to avoid "Duplicate" errors
   @Get('lawyers')
-  async findAllLawyers() {
+  async searchLawyers(@Query('query') query: string) {
+    if (query) {
+      return this.usersService.findAllLawyers(query);
+    }
     return this.usersService.findLawyers();
   }
 
-  // GET http://localhost:3000/users/lawyers?query=divorce
-  @Get('lawyers')
-  async searchLawyers(@Query('query') query: string) {
-    return this.usersService.findAllLawyers(query);
-  }
-
-  // GET http://localhost:3000/users?email=test@test.com
   @Get()
   async getUserByEmail(@Query('email') email: string) {
     return this.usersService.findByEmail(email);
   }
 
-  // PUT http://localhost:3000/users/:id
   @Put(':id')
   async update(@Param('id') id: string, @Body() data: any) {
     return this.usersService.updateUser(id, data);
