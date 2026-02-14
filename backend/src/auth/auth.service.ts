@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SecurityService } from '../prisma/security.service'; // Added
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -9,6 +10,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private security: SecurityService, // Added
   ) {}
 
   async register(dto: RegisterDto) {
@@ -20,7 +22,7 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     let userRole: 'PUBLIC' | 'LAWYER' | 'STUDENT' = 'PUBLIC';
     if (dto.role) {
@@ -29,51 +31,42 @@ export class AuthService {
       else if (upperRole === 'STUDENT') userRole = 'STUDENT';
     }
 
-    const data: any = {
-      email: dto.email,
-      passwordHash,
-      fullName: dto.fullName,
-      role: userRole,
-    };
+    // Prepare Database Transaction to ensure User and AuditLog are created together
+    const result = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          password: hashedPassword, // Matches schema field "password"
+          fullName: dto.fullName,
+          role: userRole,
+        },
+      });
 
-    // Use Timestamp to guarantee unique License on registration
-    if (userRole === 'LAWYER') {
-      data.lawyerProfile = { 
-        create: {
-           barLicenseNo: `PENDING_${Date.now()}`, 
-           specialization: [],
-           courtJurisdiction: []
-        } 
-      };
-    }
+      // --- CREATE IMMUTABLE AUDIT LOG ---
+      await tx.auditLog.create({
+        data: {
+          action: 'USER_REGISTERED',
+          userId: user.id,
+          targetId: user.id,
+          newValue: `Role: ${userRole}`,
+          hash: this.security.signLog('USER_REGISTERED', user.id, user.id),
+        },
+      });
 
-    if (userRole === 'STUDENT') {
-      data.studentProfile = { 
-        create: {
-          university: "Not Provided",
-          yearOfStudy: 1
-        } 
-      };
-    }
+      return user;
+    });
 
-    const user = await this.prisma.user.create({ data });
-
-    return { message: 'User registered successfully', userId: user.id };
+    return { message: 'User registered successfully', userId: result.id };
   }
 
   async login(dto: LoginDto) {
-    // 1. Fetch User AND their Profile Data (This was missing before)
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
-      include: {
-        lawyerProfile: true, // <--- IMPORTANT: Include Lawyer Data
-        studentProfile: true // <--- IMPORTANT: Include Student Data
-      }
     });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
+    const isMatch = await bcrypt.compare(dto.password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
     const payload = { 
@@ -82,7 +75,6 @@ export class AuthService {
       role: user.role.toLowerCase() 
     };
     
-    // 2. Return a complete User Object to Frontend
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
@@ -90,10 +82,6 @@ export class AuthService {
         name: user.fullName,
         email: user.email,
         role: user.role.toLowerCase(),
-        avatar: user.avatar,
-        // Send specific profile data if it exists
-        barLicenseNo: user.lawyerProfile?.barLicenseNo || null,
-        university: user.studentProfile?.university || null
       }
     };
   }
