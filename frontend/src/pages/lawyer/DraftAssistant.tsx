@@ -28,9 +28,9 @@ export default function DraftAssistant() {
   );
 
   return (
-    <DashboardLayout role="lawyer">
+    <DashboardLayout>
       {!selectedTemplate ? (
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
           <div className="text-center mb-12 space-y-4">
             <h2 className="text-4xl font-serif font-bold text-black">Document Template Library</h2>
             <p className="text-gray-500">Select a legal format to begin AI-assisted drafting</p>
@@ -42,7 +42,7 @@ export default function DraftAssistant() {
                 placeholder="Search templates (e.g. 'Bail')..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-full shadow-lg text-lg focus-gold transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-full shadow-lg text-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all"
               />
               {/* Perfectly Centered Icon */}
               <Search className="absolute left-5 top-1/2 pt-2 -translate-y-1/2 text-gray-400" size={20} />
@@ -57,16 +57,16 @@ export default function DraftAssistant() {
                   setSelectedTemplate(template);
                   setGeneratedContent(`IN THE COURT OF...\n\nSUBJECT: ${template.title.toUpperCase()} UNDER ${template.section.toUpperCase()}\n\n...`);
                 }}
-                className="group flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-judicial-gold transition-all duration-300 text-left hover:-translate-y-1"
+                className="group flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-[#D4AF37] transition-all duration-300 text-left hover:-translate-y-1"
               >
-                <div className="p-4 rounded-lg bg-gray-50 text-gray-600 group-hover:bg-judicial-gold group-hover:text-black transition-colors">
+                <div className="p-4 rounded-lg bg-gray-50 text-gray-600 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
                   <template.icon size={24} />
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-lg text-gray-900 group-hover:text-judicial-gold transition-colors">{template.title}</h3>
+                  <h3 className="font-serif font-bold text-lg text-gray-900 group-hover:text-[#D4AF37] transition-colors">{template.title}</h3>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">{template.section}</p>
                 </div>
-                <div className="ml-auto self-center opacity-0 group-hover:opacity-100 transition-opacity text-judicial-gold">
+                <div className="ml-auto self-center opacity-0 group-hover:opacity-100 transition-opacity text-[#D4AF37]">
                   <ArrowRight />
                 </div>
               </button>
@@ -75,7 +75,7 @@ export default function DraftAssistant() {
         </div>
       ) : (
         /* WORKSPACE VIEW (Unchanged) */
-        <div className="flex flex-col h-[calc(100vh-100px)]">
+        <div className="flex flex-col h-[calc(100vh-100px)] animate-in slide-in-from-right duration-300">
           <div className="flex items-center gap-4 mb-6">
             <button 
               onClick={() => setSelectedTemplate(null)}
@@ -85,7 +85,7 @@ export default function DraftAssistant() {
             </button>
             <div className="h-6 w-px bg-gray-300"></div>
             <h3 className="font-serif font-bold text-xl flex items-center gap-2">
-              <selectedTemplate.icon className="text-judicial-gold" size={20}/> 
+              <selectedTemplate.icon className="text-[#D4AF37]" size={20}/> 
               {selectedTemplate.title} 
             </h3>
           </div>
@@ -94,13 +94,13 @@ export default function DraftAssistant() {
             <div className="w-80 flex flex-col gap-4 overflow-y-auto pb-4">
               <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
-                  <Wand2 size={14} className="text-judicial-gold" /> AI Input Facts
+                  <Wand2 size={14} className="text-[#D4AF37]" /> AI Input Facts
                 </h4>
                 <textarea 
-                  className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg h-64 text-sm focus-gold resize-none leading-relaxed"
+                  className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg h-64 text-sm focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none resize-none leading-relaxed"
                   placeholder="Enter case facts..."
                 ></textarea>
-                <button className="w-full mt-4 py-3 btn-gold rounded-lg shadow-md font-bold text-sm flex items-center justify-center gap-2">
+                <button className="w-full mt-4 py-3 bg-[#D4AF37] hover:bg-[#bfa030] rounded-lg shadow-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
                   <Wand2 size={16} /> Auto-Draft Content
                 </button>
               </div>

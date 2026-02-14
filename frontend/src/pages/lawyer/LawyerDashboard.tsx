@@ -83,7 +83,7 @@ export default function LawyerDashboard() {
             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">
-                        Advocate {currentUser.fullName}
+                        Advocate {currentUser.fullName || currentUser.email?.split('@')[0] || 'Lawyer'}
                     </h1>
                     <div className="flex items-center gap-4 mt-2">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200">

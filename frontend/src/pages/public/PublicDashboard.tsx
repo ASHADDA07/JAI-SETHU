@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useUser } from '../../context/UserContext';
+// 1. Redux Imports
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store';
+
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { 
   Scale, FileText, Bot, Shield, Search, ArrowRight, 
-  Plus, Upload, FolderPlus, Loader2 
+  Upload
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:3000';
 
 export default function PublicDashboard() {
-  const { user } = useUser();
+  // 2. Get User from Redux
+  const { currentUser } = useSelector((state: RootState) => state.user);
+  
   const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   
   // Real Stats (Default to 0)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [stats, setStats] = useState({
     activeCases: 0,
     savedDocs: 0,
@@ -25,7 +32,7 @@ export default function PublicDashboard() {
   // Fetch Real Stats from DB
   useEffect(() => {
     const fetchStats = async () => {
-      if (!user.id) return;
+      if (!currentUser?.id) return;
       try {
         // We will build this endpoint later. For now, it gracefully fails to 0.
         // const res = await axios.get(`${API_URL}/users/${user.id}/stats`);
@@ -36,35 +43,37 @@ export default function PublicDashboard() {
         setLoading(false);
       }
     };
-    fetchStats();
-  }, [user.id]);
+    if (currentUser?.id) fetchStats();
+  }, [currentUser?.id]);
+
+  if (!currentUser) return null;
 
   return (
-    <DashboardLayout role="public">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
         
         {/* 1. WELCOME BANNER (Dynamic Name) */}
         <div className="bg-judicial-black text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-judicial-gold/20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
           <div className="relative z-10">
              <h1 className="text-3xl font-serif font-bold mb-2">
-                Welcome, {user.name}
+                Welcome, {currentUser.fullName || currentUser.email?.split('@')[0] || 'Citizen'}
              </h1>
              <p className="text-gray-400 max-w-xl">
                 Your legal command center. Manage your cases, secure your evidence, and consult with AI.
              </p>
              <div className="flex gap-4 mt-6">
                 <button 
-                    onClick={() => navigate('/public/connect')}
-                    className="px-6 py-3 bg-judicial-gold text-black font-bold rounded-lg hover:brightness-110 transition-all flex items-center gap-2"
+                   onClick={() => navigate('/public/connect')}
+                   className="px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:brightness-110 transition-all flex items-center gap-2"
                 >
-                    <Search size={18} /> Find a Lawyer
+                   <Search size={18} /> Find a Lawyer
                 </button>
                 <button 
-                    onClick={() => navigate('/public/vault')}
-                    className="px-6 py-3 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-all flex items-center gap-2 border border-white/10"
+                   onClick={() => navigate('/public/vault')}
+                   className="px-6 py-3 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-all flex items-center gap-2 border border-white/10"
                 >
-                    <Upload size={18} /> Upload Evidence
+                   <Upload size={18} /> Upload Evidence
                 </button>
              </div>
           </div>
@@ -146,13 +155,13 @@ function ActionCard({ title, desc, icon: Icon, onClick }: any) {
     return (
         <div 
            onClick={onClick}
-           className="bg-white p-6 rounded-xl border border-gray-200 hover:border-judicial-gold cursor-pointer group transition-all hover:shadow-lg"
+           className="bg-white p-6 rounded-xl border border-gray-200 hover:border-[#D4AF37] cursor-pointer group transition-all hover:shadow-lg"
         >
            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-judicial-gold group-hover:text-black transition-colors">
+              <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
                  <Icon size={20} />
               </div>
-              <ArrowRight size={20} className="text-gray-300 group-hover:text-judicial-gold transition-colors" />
+              <ArrowRight size={20} className="text-gray-300 group-hover:text-[#D4AF37] transition-colors" />
            </div>
            <h3 className="font-bold text-gray-900 mb-1">{title}</h3>
            <p className="text-sm text-gray-500">{desc}</p>

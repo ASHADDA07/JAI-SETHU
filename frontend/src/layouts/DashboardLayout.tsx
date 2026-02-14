@@ -50,6 +50,7 @@ export const DashboardLayout = ({ children }: LayoutProps) => {
     ],
     student: [
       { icon: BookOpen, label: 'Study Workspace', path: '/student' },
+      { icon: Users, label: 'Legal Network', path: '/student/network' }, // <--- Added this!
       { icon: FileText, label: 'Draft Practice', path: '/student/practice' },
       { icon: FileText, label: 'My Notes', path: '/student/notes' },
       { icon: User, label: 'My Profile', path: '/student/profile' },
@@ -69,7 +70,7 @@ export const DashboardLayout = ({ children }: LayoutProps) => {
   const currentMenu = menus[role] || menus['public'];
 
   // Safety Variables
-  const userName = currentUser?.fullName || 'User';
+  const userName = currentUser?.fullName || (currentUser as any)?.name || 'User';
   const userEmail = currentUser?.email || '';
   const userAvatar = currentUser?.avatar || '';
   const hasImageAvatar = userAvatar.length > 5;

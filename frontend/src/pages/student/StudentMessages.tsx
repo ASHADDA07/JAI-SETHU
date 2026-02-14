@@ -14,7 +14,7 @@ import {
 
 const API_URL = 'http://localhost:3000';
 
-export default function PublicMessages() {
+export default function StudentMessages() {
   // 2. Get User from Redux
   const { currentUser } = useSelector((state: RootState) => state.user);
   

@@ -1,16 +1,22 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-// 1. Import Redux tools
-import { store } from './redux/store'
-import { Provider } from 'react-redux'
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './redux/store';
+import App from './App';
+import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// Import the Socket Provider we just created
+import { SocketProvider } from './context/SocketContext';
+
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* 2. Wrap App with Provider */}
     <Provider store={store}>
-      <App />
+      <PersistGate loading={null} persistor={persistor}>
+        <SocketProvider>
+           <App />
+        </SocketProvider>
+      </PersistGate>
     </Provider>
   </React.StrictMode>,
-)
+);

@@ -19,6 +19,10 @@ export class UsersController {
   async getAssociates(@Query('excludeUserId') excludeUserId?: string) {
     return this.usersService.findAssociates(excludeUserId);
   }
+  @Get('lawyers')
+  async findAllLawyers() {
+    return this.usersService.findLawyers();
+  }
 
   // GET http://localhost:3000/users/lawyers?query=divorce
   @Get('lawyers')

@@ -23,6 +23,12 @@ export class UsersService {
       } 
     });
   }
+  async findLawyers() {
+    return this.prisma.user.findMany({
+      where: { role: 'LAWYER' },
+      include: { lawyerProfile: true }, // Include their profile details
+    });
+  }
   async findAssociates(excludeUserId?: string) {
     return this.prisma.user.findMany({
       where: {

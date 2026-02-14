@@ -43,8 +43,8 @@ export default function ConnectLawyer() {
   });
 
   return (
-    <DashboardLayout role="public">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
         
         {/* HEADER */}
         <div>
@@ -59,7 +59,7 @@ export default function ConnectLawyer() {
                 <input 
                   type="text" 
                   placeholder="Search by name (e.g. Arjun) or specialization..." 
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-judicial-gold focus:ring-1 focus:ring-judicial-gold/20"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -69,7 +69,7 @@ export default function ConnectLawyer() {
             <div className="relative min-w-[200px]">
                 <Filter className="absolute left-3 top-3.5 text-gray-400" size={18} />
                 <select 
-                   className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-judicial-gold cursor-pointer appearance-none"
+                   className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#D4AF37] cursor-pointer appearance-none transition-all"
                    value={filter}
                    onChange={(e) => setFilter(e.target.value)}
                 >
@@ -85,7 +85,7 @@ export default function ConnectLawyer() {
         {/* RESULTS GRID */}
         {loading ? (
             <div className="flex justify-center py-20">
-                <Loader2 size={40} className="animate-spin text-judicial-gold" />
+                <Loader2 size={40} className="animate-spin text-[#D4AF37]" />
             </div>
         ) : filteredLawyers.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-xl border border-gray-200 border-dashed">
@@ -93,21 +93,21 @@ export default function ConnectLawyer() {
                     <Briefcase size={32} className="text-gray-300" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">No Lawyers Found</h3>
-                <p className="text-gray-500 max-w-sm mx-auto">
+                <p className="text-gray-500 max-w-sm mx-auto mt-2">
                     {search ? `No results for "${search}". Try a different keyword.` : "There are no registered lawyers in the database yet."}
                 </p>
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredLawyers.map((lawyer) => (
-                    <div key={lawyer.id} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow flex flex-col">
+                    <div key={lawyer.id} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col group hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full bg-judicial-gold text-black flex items-center justify-center font-serif font-bold text-xl overflow-hidden">
+                                <div className="w-14 h-14 rounded-full bg-[#D4AF37] text-black flex items-center justify-center font-serif font-bold text-xl overflow-hidden shadow-sm">
                                     {lawyer.avatar?.length > 5 ? <img src={lawyer.avatar} className="w-full h-full object-cover" alt="Profile"/> : lawyer.fullName[0]}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900 text-lg">{lawyer.fullName}</h3>
+                                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-[#D4AF37] transition-colors">{lawyer.fullName}</h3>
                                     <p className="text-xs text-gray-500">{lawyer.email}</p>
                                 </div>
                             </div>
@@ -120,11 +120,11 @@ export default function ConnectLawyer() {
 
                         <div className="space-y-3 mb-6 flex-1">
                             <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Briefcase size={16} className="text-judicial-gold" />
+                                <Briefcase size={16} className="text-[#D4AF37]" />
                                 <span>{lawyer.lawyerProfile?.specialization?.join(', ') || 'General Practice'}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <MapPin size={16} className="text-judicial-gold" />
+                                <MapPin size={16} className="text-[#D4AF37]" />
                                 <span>{lawyer.lawyerProfile?.courtJurisdiction || 'India'}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -135,7 +135,7 @@ export default function ConnectLawyer() {
 
                         <button 
                             onClick={() => navigate('/public/messages', { state: { lawyer } })}
-                            className="w-full py-3 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-judicial-black hover:text-white hover:border-black transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-black hover:text-white hover:border-black transition-all flex items-center justify-center gap-2"
                         >
                             <MessageSquare size={18} /> Contact Now
                         </button>

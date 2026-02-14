@@ -3,7 +3,7 @@ import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { 
   Upload, FolderPlus, FileText, Image as ImageIcon, 
   Trash2, Lock, Loader2, Shield, MoreVertical, 
-  Folder, X, Eye, Download, Edit2, Share2, Check, Copy
+  Folder, X, Eye, Download, Edit2, Share2, Check
 } from 'lucide-react';
 
 export default function EvidenceVault() {
@@ -113,14 +113,14 @@ export default function EvidenceVault() {
   }, []);
 
   return (
-    <DashboardLayout role="public">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
         
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 className="text-2xl font-serif font-bold text-gray-900 flex items-center gap-2">
-                    <Shield className="text-judicial-gold" /> Evidence Vault
+                    <Shield className="text-[#D4AF37]" /> Evidence Vault
                 </h1>
                 <p className="text-sm text-gray-500 flex items-center gap-2">
                     <Lock size={12} className="text-green-600"/> AES-256 Encrypted Storage
@@ -159,7 +159,7 @@ export default function EvidenceVault() {
                 </span>
             </div>
             <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-judicial-gold transition-all duration-500" style={{ width: `${Math.max(files.length * 2, 2)}%` }}></div>
+                <div className="h-full bg-[#D4AF37] transition-all duration-500" style={{ width: `${Math.max(files.length * 2, 2)}%` }}></div>
             </div>
         </div>
 
@@ -305,14 +305,14 @@ export default function EvidenceVault() {
                  <input 
                     type="text" 
                     placeholder="Folder Name" 
-                    className="w-full p-3 border border-gray-300 rounded-lg mb-6 outline-none focus:border-judicial-gold"
+                    className="w-full p-3 border border-gray-300 rounded-lg mb-6 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20"
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
                     autoFocus
                  />
                  <div className="flex gap-3 justify-end">
                      <button onClick={() => setShowFolderModal(false)} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">Cancel</button>
-                     <button onClick={handleCreateFolder} className="px-6 py-2 bg-judicial-gold text-black font-bold rounded-lg hover:brightness-110">Create</button>
+                     <button onClick={handleCreateFolder} className="px-6 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:brightness-110">Create</button>
                  </div>
              </div>
         </div>
@@ -330,7 +330,7 @@ export default function EvidenceVault() {
                      <img src={previewFile.url} className="max-w-full max-h-[70vh] rounded-lg shadow-2xl" alt="Preview"/>
                  ) : (
                      <div className="bg-white p-12 rounded-2xl text-center">
-                         <FileText size={64} className="text-judicial-gold mb-4 mx-auto"/>
+                         <FileText size={64} className="text-[#D4AF37] mb-4 mx-auto"/>
                          <p className="font-bold">Preview Unavailable</p>
                          <button onClick={() => handleDownload(previewFile)} className="mt-4 px-6 py-2 bg-black text-white rounded-lg font-bold flex items-center gap-2 mx-auto">
                              <Download size={18}/> Download

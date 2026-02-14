@@ -18,6 +18,8 @@ import AssociateTeam from './pages/lawyer/AssociateTeam';
 import StudyWorkspace from './pages/student/StudyWorkspace';
 import DraftPractice from './pages/student/DraftPractice';
 import StudentNotes from './pages/student/StudentNotes';
+import StudentNetwork from './pages/student/StudentNetwork';
+import StudentMessages from './pages/student/StudentMessages';
 
 // Public
 import PublicDashboard from './pages/public/PublicDashboard';
@@ -63,6 +65,8 @@ export default function App() {
           <Route path="/student/practice" element={<DraftPractice />} />
           <Route path="/student/notes" element={<StudentNotes />} />
           <Route path="/student/profile" element={<ProfileSettings role="student" />} />
+          <Route path="/student/network" element={<StudentNetwork />} />
+          <Route path="/student/messages" element={<StudentMessages />} />
           
           {/* 4. PUBLIC ROUTES */}
           <Route path="/public" element={<PublicDashboard />} />

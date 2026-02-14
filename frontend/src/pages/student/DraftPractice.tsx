@@ -4,7 +4,7 @@ import { PenTool, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function DraftPractice() {
   return (
-    <DashboardLayout role="student">
+    <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-3xl font-serif text-white">Legal Drafting Practice</h2>

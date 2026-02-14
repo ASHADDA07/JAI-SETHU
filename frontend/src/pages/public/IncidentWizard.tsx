@@ -30,7 +30,7 @@ export default function IncidentWizard() {
                 <span className="font-bold text-gray-700">Give this a short title</span>
                 <input 
                   type="text" 
-                  className="w-full mt-2 p-4 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none"
+                  className="w-full mt-2 p-4 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none transition-all focus:ring-1 focus:ring-[#D4AF37]/20"
                   placeholder="e.g., Harassment by neighbor, Property dispute..."
                   value={data.title}
                   onChange={e => setData({...data, title: e.target.value})}
@@ -41,7 +41,7 @@ export default function IncidentWizard() {
                 <span className="font-bold text-gray-700">What happened?</span>
                 <div className="relative mt-2">
                     <textarea 
-                    className="w-full p-4 h-40 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none resize-none"
+                    className="w-full p-4 h-40 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none resize-none transition-all focus:ring-1 focus:ring-[#D4AF37]/20"
                     placeholder="Start from the beginning..."
                     value={data.description}
                     onChange={e => setData({...data, description: e.target.value})}
@@ -61,8 +61,8 @@ export default function IncidentWizard() {
             <p className="text-gray-500">This helps lawyers verify your alibi and jurisdiction.</p>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white">
-                <Calendar className="text-[#D4AF37] mb-3" size={24} />
+              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white group">
+                <Calendar className="text-[#D4AF37] mb-3 group-hover:scale-110 transition-transform" size={24} />
                 <label className="block">
                     <span className="font-bold text-gray-700">Date & Time</span>
                     <input 
@@ -74,8 +74,8 @@ export default function IncidentWizard() {
                 </label>
               </div>
 
-              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white">
-                <MapPin className="text-[#D4AF37] mb-3" size={24} />
+              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white group">
+                <MapPin className="text-[#D4AF37] mb-3 group-hover:scale-110 transition-transform" size={24} />
                 <label className="block">
                     <span className="font-bold text-gray-700">Location</span>
                     <input 
@@ -116,14 +116,14 @@ export default function IncidentWizard() {
   };
 
   return (
-    <DashboardLayout role="public">
+    <DashboardLayout>
       <div className="max-w-3xl mx-auto py-8">
         {/* Progress Bar */}
         <div className="flex justify-between mb-8 relative">
             <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10"></div>
-            <div className={`absolute top-1/2 left-0 h-1 bg-[#D4AF37] -z-10 transition-all duration-300`} style={{width: `${((step-1)/2)*100}%`}}></div>
+            <div className="absolute top-1/2 left-0 h-1 bg-[#D4AF37] -z-10 transition-all duration-300" style={{width: `${((step-1)/2)*100}%`}}></div>
             {[1, 2, 3].map(i => (
-                <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${step >= i ? 'bg-[#D4AF37] text-black shadow-lg' : 'bg-white border-2 border-gray-200 text-gray-400'}`}>
+                <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${step >= i ? 'bg-[#D4AF37] text-black shadow-lg scale-110' : 'bg-white border-2 border-gray-200 text-gray-400'}`}>
                     {i}
                 </div>
             ))}
