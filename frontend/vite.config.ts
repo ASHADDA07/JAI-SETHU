@@ -1,3 +1,4 @@
+import path from "path"
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -30,5 +31,11 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  // 👇 THIS IS THE NEW PART FOR SHADCN/UI 👇
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 });

@@ -1,11 +1,57 @@
-import { Module } from '@nestjs/common';
-import { CasesService } from './cases.service';
-import { CasesController } from './cases.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+// This is your Prisma schema file
 
-@Module({
-  imports: [PrismaModule],
-  providers: [CasesService],
-  controllers: [CasesController],
-})
-export class CasesModule {}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      String   // "ADMIN", "LAWYER", "STUDENT", "PUBLIC"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model Case {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  status      String   @default("PENDING") // PENDING, ACTIVE, RESOLVED
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  senderId   String
+  receiverId String
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+// --- NEW SECURITY MODEL ---
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // e.g., "CASE_FILED", "EVIDENCE_UPLOADED"
+  userId      String
+  targetId    String   // ID of the case or message
+  oldValue    String?  
+  newValue    String?
+  hash        String   // SHA-256 fingerprint of this record
+  createdAt   DateTime @default(now())
+}

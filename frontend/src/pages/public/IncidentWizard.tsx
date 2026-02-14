@@ -1,163 +1,166 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { DashboardLayout } from '../../layouts/DashboardLayout';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronRight, ChevronLeft, Upload, MapPin, Calendar, Mic, FileText, AlertTriangle } from 'lucide-react';
+
+// 1. Validation Schema
+const wizardSchema = z.object({
+  title: z.string().min(5, "Title is too short"),
+  description: z.string().min(20, "Please provide more details"),
+  date: z.string().min(1, "Date is required"),
+  location: z.string().min(3, "Location is required"),
+});
 
 export default function IncidentWizard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    location: '',
-    files: [] as File[]
+  const [files, setFiles] = useState<File[]>([]);
+
+  const { register, trigger, getValues, formState: { errors } } = useForm({
+    resolver: zodResolver(wizardSchema),
+    defaultValues: { title: '', description: '', date: '', location: '' }
   });
 
-  const handleNext = () => setStep(s => s + 1);
-  const handleBack = () => setStep(s => s - 1);
+  const handleNext = async () => {
+    // Only validate the fields relevant to the current step
+    const fields: any = step === 1 ? ['title', 'description'] : ['date', 'location'];
+    const isValid = await trigger(fields);
+    if (isValid) setStep(s => s + 1);
+  };
 
-  const renderStep = () => {
-    switch(step) {
-      case 1: // The Story
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
-            <h2 className="text-2xl font-serif font-bold text-gray-900">Tell us what happened</h2>
-            <p className="text-gray-500">Don't worry about legal terms. Just tell your story in your own words.</p>
-            
-            <div className="space-y-4">
-              <label className="block">
-                <span className="font-bold text-gray-700">Give this a short title</span>
-                <input 
-                  type="text" 
-                  className="w-full mt-2 p-4 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none transition-all focus:ring-1 focus:ring-[#D4AF37]/20"
-                  placeholder="e.g., Harassment by neighbor, Property dispute..."
-                  value={data.title}
-                  onChange={e => setData({...data, title: e.target.value})}
-                />
-              </label>
-
-              <label className="block">
-                <span className="font-bold text-gray-700">What happened?</span>
-                <div className="relative mt-2">
-                    <textarea 
-                    className="w-full p-4 h-40 border border-gray-200 rounded-xl focus:border-[#D4AF37] outline-none resize-none transition-all focus:ring-1 focus:ring-[#D4AF37]/20"
-                    placeholder="Start from the beginning..."
-                    value={data.description}
-                    onChange={e => setData({...data, description: e.target.value})}
-                    />
-                    <button className="absolute bottom-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-600" title="Use Voice Input">
-                        <Mic size={20} />
-                    </button>
-                </div>
-              </label>
-            </div>
-          </div>
-        );
-      case 2: // Context
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
-            <h2 className="text-2xl font-serif font-bold text-gray-900">When and Where?</h2>
-            <p className="text-gray-500">This helps lawyers verify your alibi and jurisdiction.</p>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white group">
-                <Calendar className="text-[#D4AF37] mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <label className="block">
-                    <span className="font-bold text-gray-700">Date & Time</span>
-                    <input 
-                    type="datetime-local" 
-                    className="w-full mt-2 p-2 bg-gray-50 rounded-lg outline-none"
-                    value={data.date}
-                    onChange={e => setData({...data, date: e.target.value})}
-                    />
-                </label>
-              </div>
-
-              <div className="p-6 border border-gray-200 rounded-xl hover:border-[#D4AF37] cursor-pointer transition-colors bg-white group">
-                <MapPin className="text-[#D4AF37] mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <label className="block">
-                    <span className="font-bold text-gray-700">Location</span>
-                    <input 
-                    type="text" 
-                    className="w-full mt-2 p-2 bg-gray-50 rounded-lg outline-none"
-                    placeholder="e.g., Koramangala, Bangalore"
-                    value={data.location}
-                    onChange={e => setData({...data, location: e.target.value})}
-                    />
-                </label>
-              </div>
-            </div>
-          </div>
-        );
-      case 3: // Evidence
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
-            <h2 className="text-2xl font-serif font-bold text-gray-900">Do you have proof?</h2>
-            <p className="text-gray-500">Photos, Screenshots, Audio Recordings, or PDF Documents.</p>
-            
-            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-10 text-center hover:bg-gray-50 transition-colors cursor-pointer group">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37] transition-colors">
-                    <Upload size={32} className="text-gray-400 group-hover:text-[#D4AF37]" />
-                </div>
-                <h3 className="font-bold text-gray-900">Click to Upload Evidence</h3>
-                <p className="text-sm text-gray-500 mt-2">Files are automatically hashed and secured.</p>
-                <input type="file" multiple className="hidden" />
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded-xl flex items-start gap-3 text-sm text-yellow-800">
-                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                <p><strong>Pro Tip:</strong> Don't edit screenshots or crop photos. Original files have "metadata" that acts as digital proof.</p>
-            </div>
-          </div>
-        );
-      default: return null;
-    }
+  const handleFinalSubmit = () => {
+    const finalData = { ...getValues(), files };
+    console.log("Final Submission for Security Hashing:", finalData);
+    
+    toast({
+      title: "Case Token Generated",
+      description: "Moving to Lawyer Connection...",
+    });
+    
+    navigate('/public/connect');
   };
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto py-8">
-        {/* Progress Bar */}
-        <div className="flex justify-between mb-8 relative">
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10"></div>
-            <div className="absolute top-1/2 left-0 h-1 bg-[#D4AF37] -z-10 transition-all duration-300" style={{width: `${((step-1)/2)*100}%`}}></div>
-            {[1, 2, 3].map(i => (
-                <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${step >= i ? 'bg-[#D4AF37] text-black shadow-lg scale-110' : 'bg-white border-2 border-gray-200 text-gray-400'}`}>
-                    {i}
-                </div>
-            ))}
-        </div>
-
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 min-h-[400px] flex flex-col justify-between">
-            {renderStep()}
-
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
-                <button 
-                    onClick={handleBack} 
-                    disabled={step === 1}
-                    className="flex items-center gap-2 px-6 py-3 font-bold text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                    <ChevronLeft size={20} /> Back
-                </button>
-                
-                {step < 3 ? (
-                    <button 
-                        onClick={handleNext}
-                        className="flex items-center gap-2 px-8 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition-all shadow-lg"
-                    >
-                        Next Step <ChevronRight size={20} />
-                    </button>
-                ) : (
-                    <button 
-                        onClick={() => navigate('/public/connect')} // In real app, submit to backend first
-                        className="flex items-center gap-2 px-8 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:bg-[#bfa030] transition-all shadow-lg"
-                    >
-                        <FileText size={20} /> Generate Case & Find Lawyer
-                    </button>
-                )}
+      <div className="max-w-3xl mx-auto py-8 px-4">
+        
+        {/* Step Indicator (Refactored to shadcn style) */}
+        <div className="flex justify-between mb-12 relative">
+          <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
+                step >= i ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-md' : 'bg-white border-gray-200 text-gray-400'
+              }`}>
+                {i}
+              </div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                {i === 1 ? "Story" : i === 2 ? "Context" : "Evidence"}
+              </span>
             </div>
+          ))}
         </div>
+
+        <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+          <CardContent className="p-8">
+            {step === 1 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-serif font-bold">Tell your story</h2>
+                  <p className="text-muted-foreground">Describe the incident in your own words.</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Case Title</Label>
+                    <Input {...register("title")} placeholder="e.g., Unfair dismissal, Rent dispute..." className="h-12" />
+                    {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">What happened?</Label>
+                    <div className="relative">
+                      <Textarea {...register("description")} placeholder="Describe the events..." className="min-h-[180px] pr-12" />
+                      <Button size="icon" variant="ghost" className="absolute bottom-2 right-2 text-gray-400">
+                        <Mic size={18} />
+                      </Button>
+                    </div>
+                    {errors.description && <p className="text-red-500 text-xs">{errors.description.message}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-serif font-bold">Context</h2>
+                  <p className="text-muted-foreground">When and where did this happen?</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Calendar size={14}/> Date & Time</Label>
+                    <Input type="datetime-local" {...register("date")} />
+                    {errors.date && <p className="text-red-500 text-xs">{errors.date.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><MapPin size={14}/> Location</Label>
+                    <Input {...register("location")} placeholder="City, Area" />
+                    {errors.location && <p className="text-red-500 text-xs">{errors.location.message}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                 <div className="space-y-2">
+                  <h2 className="text-3xl font-serif font-bold">Evidence Vault</h2>
+                  <p className="text-muted-foreground">Upload photos or documents to secure them.</p>
+                </div>
+
+                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center hover:border-[#D4AF37] hover:bg-[#D4AF37]/5 transition-all cursor-pointer group">
+                  <Upload className="mx-auto mb-4 text-gray-400 group-hover:text-[#D4AF37]" size={40} />
+                  <p className="font-bold">Drop files here or click to upload</p>
+                  <p className="text-xs text-gray-400 mt-2">Maximum file size: 10MB</p>
+                  <Input type="file" multiple className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 text-sm text-blue-800">
+                  <AlertTriangle size={18} className="shrink-0" />
+                  <p><strong>Chain of Custody:</strong> Your files will be cryptographically hashed (SHA-256) upon upload to prove they were not tampered with.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-12 pt-6 border-t border-gray-100">
+              <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
+                <ChevronLeft className="mr-2" size={18} /> Back
+              </Button>
+
+              {step < 3 ? (
+                <Button onClick={handleNext} className="bg-black text-white hover:bg-gray-800 px-8">
+                  Next <ChevronRight className="ml-2" size={18} />
+                </Button>
+              ) : (
+                <Button onClick={handleFinalSubmit} className="bg-[#D4AF37] text-black hover:bg-[#bfa030] px-8 font-bold">
+                  <FileText className="mr-2" size={18} /> Secure & Submit
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
