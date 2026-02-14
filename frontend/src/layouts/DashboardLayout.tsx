@@ -1,31 +1,45 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+// 1. Redux Imports (Replacing useUser)
+import { useSelector, useDispatch } from 'react-redux';
+import { signOut } from '../redux/userSlice';
+import type { RootState } from '../redux/store';
+
 import { useLanguage } from '../context/LanguageContext';
 import { 
-  LogOut, LayoutDashboard, FileText, Scale, // <--- ADDED SCALE HERE
+  LogOut, LayoutDashboard, FileText, Scale, 
   MessageSquare, ShieldAlert, BookOpen, Users,
   Menu, PanelLeftClose, Briefcase, Home, User, Settings, ChevronDown, Globe 
 } from 'lucide-react';
 
 interface LayoutProps {
-  children: ReactNode;
-  role: 'public' | 'lawyer' | 'student' | 'admin' | 'founder';
+  children?: ReactNode; // Made optional to prevent strict errors
 }
 
-export const DashboardLayout = ({ children, role }: LayoutProps) => {
+export const DashboardLayout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
-  // 1. Get Global Data
-  const { user, logout } = useUser();
+  // 2. Get Global Data from Redux & Language Context
+  const { currentUser } = useSelector((state: RootState) => state.user);
   const { lang, toggleLanguage, t } = useLanguage();
 
-  // 2. Local UI State
+  // 3. Local UI State
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  // 3. Define Menus
-  const menus = {
+  // 4. Handle Logout (Redux Version)
+  const handleLogout = () => {
+    dispatch(signOut());
+    sessionStorage.removeItem('token');
+    navigate('/login');
+  };
+
+  // 5. Determine Role & Menu
+  // Default to 'public' if no user is logged in
+  const role = currentUser?.role?.toLowerCase() || 'public';
+
+  const menus: Record<string, any[]> = {
     lawyer: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/lawyer' },
       { icon: Users, label: 'Client Intake', path: '/lawyer/intake' },
@@ -55,9 +69,9 @@ export const DashboardLayout = ({ children, role }: LayoutProps) => {
   const currentMenu = menus[role] || menus['public'];
 
   // Safety Variables
-  const userName = user?.name || 'User';
-  const userEmail = user?.email || '';
-  const userAvatar = user?.avatar || '';
+  const userName = currentUser?.fullName || 'User';
+  const userEmail = currentUser?.email || '';
+  const userAvatar = currentUser?.avatar || '';
   const hasImageAvatar = userAvatar.length > 5;
 
   return (
@@ -112,7 +126,7 @@ export const DashboardLayout = ({ children, role }: LayoutProps) => {
           </button>
 
           <button 
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-2 w-full text-left text-red-400 hover:bg-red-900/10 rounded-lg transition-colors whitespace-nowrap"
           >
             <LogOut className="w-5 h-5" />
@@ -183,15 +197,15 @@ export const DashboardLayout = ({ children, role }: LayoutProps) => {
                           <User size={16}/> My Profile
                        </button>
                        <button 
-                          onClick={() => { navigate(`/${role}/profile`); setIsProfileMenuOpen(false); }} 
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                         onClick={() => { navigate(`/${role}/profile`); setIsProfileMenuOpen(false); }} 
+                         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                        >
                           <Settings size={16}/> Settings
                        </button>
                     </div>
                     <div className="p-2 border-t border-gray-100">
                        <button 
-                         onClick={logout} 
+                         onClick={handleLogout} 
                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-bold"
                        >
                           <LogOut size={16}/> {t('sign_out')}

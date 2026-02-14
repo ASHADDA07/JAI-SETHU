@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useUser } from '../../context/UserContext';
+// 1. Redux Imports
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store';
+
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { UserPlus, Briefcase, Share2, Star, Loader2, User } from 'lucide-react';
+import { UserPlus, Briefcase, Share2, Star, Loader2 } from 'lucide-react';
 
 const API_URL = 'http://localhost:3000';
 
@@ -14,14 +17,16 @@ interface Associate {
 }
 
 export default function AssociateTeam() {
-  const { user } = useUser();
+  // 2. Get User from Redux
+  const { currentUser } = useSelector((state: RootState) => state.user);
+  
   const [associates, setAssociates] = useState<Associate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAssociates = async () => {
       try {
-        const res = await axios.get(`${API_URL}/users/associates?excludeUserId=${user?.id}`);
+        const res = await axios.get(`${API_URL}/users/associates?excludeUserId=${currentUser?.id}`);
         setAssociates(res.data);
       } catch (error) {
         console.error('Failed to load associates:', error);
@@ -29,12 +34,12 @@ export default function AssociateTeam() {
         setLoading(false);
       }
     };
-    if (user?.id) fetchAssociates();
-  }, [user?.id]);
+    if (currentUser?.id) fetchAssociates();
+  }, [currentUser?.id]);
 
   if (loading) {
     return (
-      <DashboardLayout role="lawyer">
+      <DashboardLayout>
         <div className="flex justify-center items-center h-96">
           <Loader2 size={40} className="animate-spin text-[#D4AF37]" />
         </div>
@@ -43,7 +48,7 @@ export default function AssociateTeam() {
   }
 
   return (
-    <DashboardLayout role="lawyer">
+    <DashboardLayout>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-serif font-bold text-black">Associate Team</h2>

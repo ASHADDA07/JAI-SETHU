@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useUser } from '../../context/UserContext';
+// 1. Redux Imports
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store';
+
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { 
   Send, MessageSquare, Search, MoreVertical, 
@@ -10,7 +13,8 @@ import {
 const API_URL = 'http://localhost:3000';
 
 export default function LawyerMessages() {
-  const { user } = useUser();
+  // 2. Get User from Redux
+  const { currentUser } = useSelector((state: RootState) => state.user);
   
   // -- STATE --
   const [inbox, setInbox] = useState<any[]>([]);
@@ -20,13 +24,13 @@ export default function LawyerMessages() {
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<any>(null);
 
-  // 0. SAFETY CHECK (Fixes the 'user is possibly null' error)
-  if (!user) return null;
+  // 0. SAFETY CHECK
+  if (!currentUser) return null;
 
   // 1. Fetch Inbox
   const fetchInbox = async () => {
     try {
-        const res = await axios.get(`${API_URL}/messages/inbox?userId=${user.id}`);
+        const res = await axios.get(`${API_URL}/messages/inbox?userId=${currentUser.id}`);
         setInbox(res.data);
     } catch(e) { 
         console.error(e); 
@@ -39,7 +43,7 @@ export default function LawyerMessages() {
   const fetchHistory = async () => {
     if (!activeChat) return;
     try {
-        const res = await axios.get(`${API_URL}/messages/history?u1=${user.id}&u2=${activeChat.id}`);
+        const res = await axios.get(`${API_URL}/messages/history?u1=${currentUser.id}&u2=${activeChat.id}`);
         setMessages(res.data);
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch(e) { console.error(e); }
@@ -49,13 +53,13 @@ export default function LawyerMessages() {
   const sendMessage = async () => {
       if (!input.trim() || !activeChat) return;
       
-      const tempMsg = { content: input, senderId: user.id, createdAt: new Date().toISOString() };
+      const tempMsg = { content: input, senderId: currentUser.id, createdAt: new Date().toISOString() };
       setMessages(prev => [...prev, tempMsg]); // Optimistic Update
       setInput('');
       
       try {
           await axios.post(`${API_URL}/messages`, {
-              senderId: user.id,
+              senderId: currentUser.id,
               receiverId: activeChat.id,
               content: tempMsg.content
           });
@@ -67,7 +71,7 @@ export default function LawyerMessages() {
   };
 
   // Effects
-  useEffect(() => { fetchInbox(); }, [user.id]);
+  useEffect(() => { fetchInbox(); }, [currentUser.id]);
   useEffect(() => { 
       if(activeChat) {
           fetchHistory();
@@ -77,7 +81,7 @@ export default function LawyerMessages() {
   }, [activeChat]);
 
   return (
-    <DashboardLayout role="lawyer">
+    <DashboardLayout>
       <div className="flex h-[calc(100vh-140px)] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
         
         {/* --- LEFT: INBOX SIDEBAR --- */}
@@ -156,7 +160,7 @@ export default function LawyerMessages() {
 
                 <div className="flex-1 p-6 overflow-y-auto space-y-4">
                     {messages.map((msg, idx) => {
-                        const isMe = msg.senderId === user.id;
+                        const isMe = msg.senderId === currentUser.id;
                         return (
                             <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`

@@ -1,44 +1,50 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useUser } from '../../context/UserContext';
 import { Scale, Loader2, ArrowRight, Lock } from 'lucide-react';
+
+// 1. Redux Imports
+import { useDispatch, useSelector } from 'react-redux';
+import { signInStart, signInSuccess, signInFailure } from '../../redux/userSlice';
+import type { RootState } from '../../redux/store';
 
 const API_URL = 'http://localhost:3000';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const dispatch = useDispatch();
+
+  // 2. Get state from Redux (instead of local state)
+  const { loading, error } = useSelector((state: RootState) => state.user);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    
+    // 3. Start Redux Loading
+    dispatch(signInStart());
 
     try {
-      // 1. Send Login Request
+      // Send Login Request
       const res = await axios.post(`${API_URL}/auth/login`, { email, password });
       
-      // 2. Extract Data
       const { access_token, user } = res.data;
 
-      // 3. Save to Session
+      // Save to Session
       sessionStorage.setItem('token', access_token);
-      setUser(user);
 
-      // 4. SMART REDIRECT (Based on Role)
-      // This is the fix you asked for:
+      // 4. Update Redux with User Data
+      dispatch(signInSuccess(user));
+
+      // SMART REDIRECT (Based on Role)
       switch (user.role?.toLowerCase()) {
         case 'lawyer':
-          navigate('/lawyer'); // Redirects to Lawyer Dashboard
+          navigate('/lawyer');
           break;
         case 'student':
-          navigate('/student'); // Redirects to Student Dashboard
+          navigate('/student');
           break;
         case 'admin':
           navigate('/admin');
@@ -47,14 +53,13 @@ export default function Login() {
           navigate('/founder');
           break;
         default:
-          navigate('/public'); // Default for 'public' users
+          navigate('/public');
       }
 
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
+      // 5. Send Error to Redux
+      dispatch(signInFailure(err.response?.data?.message || 'Invalid email or password.'));
     }
   };
 

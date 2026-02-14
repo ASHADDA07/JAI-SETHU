@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useUser } from '../../context/UserContext';
+// 1. Redux Imports
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store';
+
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { Check, X, User, Clock, MapPin, Phone, Loader2 } from 'lucide-react';
 
@@ -20,18 +23,20 @@ interface CaseData {
 }
 
 export default function ClientIntake() {
-  const { user } = useUser();
+  // 2. Get User from Redux
+  const { currentUser } = useSelector((state: RootState) => state.user);
+  
   const [cases, setCases] = useState<CaseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // 1. Fetch Pending Cases
+  // Fetch Pending Cases
   useEffect(() => {
-    if (!user?.id) return;
+    if (!currentUser?.id) return;
 
     const fetchPendingCases = async () => {
       try {
-        const res = await axios.get(`${API_URL}/cases/pending?lawyerId=${user.id}`);
+        const res = await axios.get(`${API_URL}/cases/pending?lawyerId=${currentUser.id}`);
         setCases(res.data);
       } catch (error) {
         console.error('Failed to load pending cases:', error);
@@ -42,9 +47,9 @@ export default function ClientIntake() {
     };
 
     fetchPendingCases();
-  }, [user?.id]);
+  }, [currentUser?.id]);
 
-  // 2. Handle Accept Case
+  // Handle Accept Case
   const handleAccept = async (caseId: string) => {
     setActionLoading(caseId);
     try {
@@ -57,7 +62,7 @@ export default function ClientIntake() {
     }
   };
 
-  // 3. Handle Decline Case
+  // Handle Decline Case
   const handleDecline = async (caseId: string) => {
     setActionLoading(caseId);
     try {
@@ -72,7 +77,7 @@ export default function ClientIntake() {
 
   if (loading) {
     return (
-      <DashboardLayout role="lawyer">
+      <DashboardLayout>
         <div className="flex justify-center items-center h-96">
           <Loader2 size={40} className="animate-spin text-[#D4AF37]" />
         </div>
@@ -81,7 +86,7 @@ export default function ClientIntake() {
   }
 
   return (
-    <DashboardLayout role="lawyer">
+    <DashboardLayout>
       <div className="mb-8">
         <h2 className="text-3xl font-serif font-bold text-black">Client Intake Queue</h2>
         <p className="text-gray-500 mt-1">Review and approve new consultation requests from the database.</p>
