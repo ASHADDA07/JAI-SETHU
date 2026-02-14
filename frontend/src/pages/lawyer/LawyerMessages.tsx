@@ -3,6 +3,7 @@ import axios from 'axios';
 // 1. Redux Imports
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../redux/store';
+import { useSocket } from '../../context/SocketContext';
 
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { 
@@ -15,6 +16,7 @@ const API_URL = 'http://localhost:3000';
 export default function LawyerMessages() {
   // 2. Get User from Redux
   const { currentUser } = useSelector((state: RootState) => state.user);
+  const { socket } = useSocket();
   
   // -- STATE --
   const [inbox, setInbox] = useState<any[]>([]);
@@ -51,23 +53,23 @@ export default function LawyerMessages() {
 
   // 3. Send Message
   const sendMessage = async () => {
-      if (!input.trim() || !activeChat) return;
+      // Safety Checks
+      if (!input.trim() || !activeChat || !currentUser) return;
       
-      const tempMsg = { content: input, senderId: currentUser.id, createdAt: new Date().toISOString() };
-      setMessages(prev => [...prev, tempMsg]); // Optimistic Update
+      const payload = {
+          senderId: currentUser.id,
+          receiverId: activeChat.id,
+          content: input
+      };
+
+      // ✅ CORRECT: Use Socket only
+      socket?.emit('sendMessage', payload);
+
+      // Optimistic UI Update
+      setMessages(prev => [...prev, { ...payload, createdAt: new Date().toISOString() }]);
       setInput('');
       
-      try {
-          await axios.post(`${API_URL}/messages`, {
-              senderId: currentUser.id,
-              receiverId: activeChat.id,
-              content: tempMsg.content
-          });
-          fetchHistory(); // Sync
-          fetchInbox();   // Update sidebar order
-      } catch(e) { 
-          alert("Failed to send"); 
-      }
+      // ❌ DELETE ANY AXIOS.POST CODE HERE
   };
 
   // Effects

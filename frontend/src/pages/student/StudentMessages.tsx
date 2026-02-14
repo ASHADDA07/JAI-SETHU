@@ -72,27 +72,26 @@ export default function StudentMessages() {
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch(e) { console.error(e); }
   };
-
-  // 3. Send Message
+  
+// 3. Send Message
   const sendMessage = async () => {
-      if (!input.trim() || !activeChat) return;
+      // Safety Check
+      if (!input.trim() || !activeChat || !currentUser) return;
       
-      const tempMsg = { content: input, senderId: currentUser.id, createdAt: new Date().toISOString() };
-      setMessages(prev => [...prev, tempMsg]); // Optimistic UI update
+      const payload = {
+          senderId: currentUser.id,
+          receiverId: activeChat.id,
+          content: input
+      };
+
+      // 1. Send via Socket (Backend saves it automatically)
+      socket?.emit('sendMessage', payload);
+      
+      // 2. Update UI immediately
+      setMessages(prev => [...prev, { ...payload, createdAt: new Date().toISOString() }]); 
       setInput('');
-      
-      try {
-          await axios.post(`${API_URL}/messages`, {
-              senderId: currentUser.id,
-              receiverId: activeChat.id,
-              content: tempMsg.content
-          });
-          fetchHistory(); // Sync with server
-          fetchInbox();   // Update sidebar preview
-      } catch(e) { 
-          alert("Failed to send"); 
-      }
   };
+
 // 4. REAL-TIME LISTENER
   useEffect(() => {
     if (!socket) return;
