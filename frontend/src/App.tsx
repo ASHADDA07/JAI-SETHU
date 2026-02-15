@@ -38,38 +38,35 @@ import FounderDashboard from './pages/founder/FounderDashboard';
 export default function App() {
   return (
     <LanguageProvider>
-      {/* UserProvider removed - Redux Provider is now in main.tsx */}
       <BrowserRouter>
         <Routes>
           {/* 1. CORE ROUTES */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
-          
-          {/* Fallback if they just type /register */}
           <Route path="/register" element={<Register />} />
           
-          {/* Dynamic Route: /public/register or /lawyer/register */}
+          {/* Dynamic Register Route */}
           <Route path="/:role/register" element={<Register />} />
-          <Route path="incident/new" element={<IncidentWizard />} />
+          <Route path="/incident/new" element={<IncidentWizard />} />
 
-          {/* 2. LAWYER ROUTES */}
-          <Route path="/lawyer" element={<LawyerDashboard />} />
+          {/* 2. LAWYER ROUTES (Fixed Path: /lawyer -> /lawyer/dashboard) */}
+          <Route path="/lawyer/dashboard" element={<LawyerDashboard />} />
           <Route path="/lawyer/intake" element={<ClientIntake />} />
           <Route path="/lawyer/draft" element={<DraftAssistant />} />
           <Route path="/lawyer/messages" element={<LawyerMessages />} />
           <Route path="/lawyer/associates" element={<AssociateTeam />} />
           <Route path="/lawyer/profile" element={<ProfileSettings role="lawyer" />} />
 
-          {/* 3. STUDENT ROUTES */}
-          <Route path="/student" element={<StudyWorkspace />} />
+          {/* 3. STUDENT ROUTES (Fixed Path: /student -> /student/workspace) */}
+          <Route path="/student/workspace" element={<StudyWorkspace />} />
           <Route path="/student/practice" element={<DraftPractice />} />
           <Route path="/student/notes" element={<StudentNotes />} />
           <Route path="/student/profile" element={<ProfileSettings role="student" />} />
           <Route path="/student/network" element={<StudentNetwork />} />
           <Route path="/student/messages" element={<StudentMessages />} />
           
-          {/* 4. PUBLIC ROUTES */}
-          <Route path="/public" element={<PublicDashboard />} />
+          {/* 4. PUBLIC ROUTES (Fixed Path: /public -> /public/dashboard) */}
+          <Route path="/public/dashboard" element={<PublicDashboard />} />
           <Route path="/public/vault" element={<EvidenceVault />} />
           <Route path="/public/ai" element={<AIConsultant />} />
           <Route path="/public/connect" element={<ConnectLawyer />} />
@@ -77,7 +74,7 @@ export default function App() {
           <Route path="/public/profile" element={<ProfileSettings role="public" />} />
           
           {/* 5. ADMIN/FOUNDER */}
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/founder" element={<FounderDashboard />} />
           
           {/* Catch All - Redirects unknown pages to Home */}

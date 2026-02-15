@@ -1,54 +1,73 @@
-// This is your Prisma schema file
+// S:\JAI-SETHU\backend\prisma\schema.prisma
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Change to "mysql" if you are using MySQL
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PUBLIC
+  STUDENT
+  LAWYER
+  ADMIN
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String   
-  fullName  String
-  role      String   // "ADMIN", "LAWYER", "STUDENT", "PUBLIC"
-  avatar    String?  // Added back to fix errors
+  password  String
+  fullName  String?
+  role      Role     @default(PUBLIC)
+  avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  lawyerProfile    LawyerProfile?
-  studentProfile   StudentProfile?
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  // Profile Relations
+  lawyerProfile  LawyerProfile?
+  studentProfile StudentProfile?
+
+  // App Relations
+  cases            Case[]
+  sentMessages     Message[]     @relation("SentMessages")
+  receivedMessages Message[]     @relation("ReceivedMessages")
+  auditLogs        AuditLog[]
 }
 
 model LawyerProfile {
-  id                String   @id @default(uuid())
-  barLicenseNo      String   @unique
-  specialization    String[]
-  courtJurisdiction String[]
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id])
+  id              String @id @default(uuid())
+  barEnrollmentNo String
+  practicingCourt String
+  specialization  String?
+  experience      Int?
+  
+  userId          String @unique
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StudentProfile {
-  id          String @id @default(uuid())
-  university  String
-  yearOfStudy Int
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id])
+  id           String @id @default(uuid())
+  university   String
+  year         String
+  enrollmentNo String?
+
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Case {
   id          String   @id @default(uuid())
   title       String
   description String
-  status      String   @default("PENDING") // PENDING, ACTIVE, RESOLVED
-  category    String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, CLOSED
+  category    String   @default("GENERAL") // Added this field
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -56,21 +75,26 @@ model Case {
 model Message {
   id         String   @id @default(uuid())
   content    String
+  
   senderId   String
-  receiverId String
-  createdAt  DateTime @default(now())
-
   sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId String   // Added this field
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  createdAt  DateTime @default(now())
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  action      String   
-  userId      String
-  targetId    String   
-  oldValue    String?  
-  newValue    String?
-  hash        String   
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  targetId  String?  // Needed for newCase.id
+  newValue  String?  // <--- Add this
+  hash      String?  // <--- Add this
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
 }

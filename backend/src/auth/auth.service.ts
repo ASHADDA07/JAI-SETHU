@@ -1,87 +1,88 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { SecurityService } from '../prisma/security.service'; // Added
-import { RegisterDto, LoginDto } from './dto/auth.dto';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService,
-    private security: SecurityService, // Added
+    private jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
+  // REGISTER
+  async register(dto: any) {
+    // 1. Check if user exists
+    const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
+    if (existing) throw new ConflictException('Email already exists');
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
-
+    // 2. Hash Password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    let userRole: 'PUBLIC' | 'LAWYER' | 'STUDENT' = 'PUBLIC';
-    if (dto.role) {
-      const upperRole = dto.role.toUpperCase();
-      if (upperRole === 'LAWYER') userRole = 'LAWYER';
-      else if (upperRole === 'STUDENT') userRole = 'STUDENT';
-    }
-
-    // Prepare Database Transaction to ensure User and AuditLog are created together
-    const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: dto.email,
-          password: hashedPassword, // Matches schema field "password"
-          fullName: dto.fullName,
-          role: userRole,
-        },
-      });
-
-      // --- CREATE IMMUTABLE AUDIT LOG ---
-      await tx.auditLog.create({
-        data: {
-          action: 'USER_REGISTERED',
-          userId: user.id,
-          targetId: user.id,
-          newValue: `Role: ${userRole}`,
-          hash: this.security.signLog('USER_REGISTERED', user.id, user.id),
-        },
-      });
-
-      return user;
+    // 3. Create User
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        fullName: dto.fullName,
+        role: dto.role.toUpperCase(), // Ensure role matches Enum (PUBLIC, LAWYER, etc.)
+        avatar: '',
+      },
     });
 
-    return { message: 'User registered successfully', userId: result.id };
+    return this.signToken(user.id, user.email, user.role);
   }
 
-  async login(dto: LoginDto) {
+  // LOGIN (With Debug Logs)
+  async login(dto: any) {
+    console.log('🔍 Login Attempt:', dto.email); 
+
+    // 1. Find User
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      console.log('❌ User not found in DB'); 
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-    const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    // 2. Check Password
+    const pwMatches = await bcrypt.compare(dto.password, user.password);
+    if (!pwMatches) {
+      console.log('❌ Password mismatch'); 
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-    const payload = { 
-      sub: user.id, 
-      email: user.email, 
-      role: user.role.toLowerCase() 
-    };
+    // 3. Check Role
+    const inputRole = dto.role ? dto.role.toUpperCase() : user.role;
     
+    if (user.role !== inputRole) {
+       console.log(`❌ Role Mismatch: DB says ${user.role}, Input says ${inputRole}`);
+       throw new UnauthorizedException('Wrong portal. Please login as ' + user.role);
+    }
+
+    console.log('✅ Login Successful');
+    return this.signToken(user.id, user.email, user.role);
+  }
+
+  // HELPER: Sign Token
+  async signToken(userId: string, email: string, role: string) {
+    const payload = { sub: userId, email, role };
+    const token = await this.jwt.signAsync(payload, {
+      expiresIn: '1d',
+      secret: process.env.JWT_SECRET || 'super-secret',
+    });
+
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: token,
       user: {
-        id: user.id,
-        name: user.fullName,
-        email: user.email,
-        role: user.role.toLowerCase(),
+        id: userId,
+        email: email,
+        role: role,
+        fullName: '', // Add fields as needed
       }
     };
   }

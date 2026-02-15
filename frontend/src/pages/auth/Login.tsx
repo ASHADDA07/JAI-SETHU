@@ -69,7 +69,7 @@ export default function Login() {
     try {
       const res = await axios.post(`${API_URL}/auth/login`, {
          ...formData,
-         role 
+         role: role.toUpperCase() // <--- THIS IS THE FIX
       });
       
       sessionStorage.setItem('token', res.data.access_token);

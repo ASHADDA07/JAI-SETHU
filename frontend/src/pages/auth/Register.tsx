@@ -5,8 +5,10 @@ import Confetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Shield, GraduationCap, Gavel, CheckCircle, ArrowRight, MapPin, Phone, Mail, User, Loader2, ArrowLeft, Lock, FileText, QrCode } from 'lucide-react';
+import axios from 'axios';
 
-// --- THEMES: THE DRAGON PALETTES ---
+const API_URL = 'http://localhost:3000';
+
 const THEMES = {
   public: {
     bg: "bg-slate-50",
@@ -41,16 +43,30 @@ export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // LOGIC: If URL has ?role=..., force that role. Otherwise default to step 1.
   const urlRole = searchParams.get('role') as 'public' | 'student' | 'lawyer';
   
   const [step, setStep] = useState(urlRole ? 2 : 1); 
   const [role, setRole] = useState<'public' | 'student' | 'lawyer'>(urlRole || 'public');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // 1. ADDED confirmPassword HERE
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '', // <--- NEW FIELD
+    phone: '',
+    city: '',
+    barEnrollment: '', 
+    practicingCourt: '', 
+    university: '', 
+    year: '', 
+    studentId: '' 
+  });
   
   const theme = THEMES[role];
 
-  // If URL changes, update state
   useEffect(() => {
      if(urlRole) {
          setRole(urlRole);
@@ -63,14 +79,37 @@ export default function Register() {
     setStep(2);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
+    setError('');
+
+    // 2. ADDED VALIDATION LOGIC HERE
+    if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match!");
         setLoading(false);
+        return;
+    }
+
+    try {
+        await axios.post(`${API_URL}/auth/register`, {
+            email: formData.email,
+            password: formData.password,
+            fullName: formData.fullName,
+            role: role.toUpperCase(), 
+        });
+
         setStep(3);
-    }, 2500);
+    } catch (err: any) {
+        console.error(err);
+        setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -78,7 +117,6 @@ export default function Register() {
       
       <AnimatePresence mode='wait'>
         
-        {/* --- STEP 1: CHOOSE IDENTITY (Only if no role in URL) --- */}
         {step === 1 && !urlRole && (
           <motion.div 
             key="step1"
@@ -95,27 +133,9 @@ export default function Register() {
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 px-4">
-                <RoleCard 
-                   icon={Shield} 
-                   title="Citizen" 
-                   desc="Secure Grievance Filing" 
-                   style="navy"
-                   onClick={() => handleRoleSelect('public')}
-                />
-                <RoleCard 
-                   icon={Gavel} 
-                   title="Advocate" 
-                   desc="Legal Practice Management" 
-                   style="gold"
-                   onClick={() => handleRoleSelect('lawyer')}
-                />
-                <RoleCard 
-                   icon={GraduationCap} 
-                   title="Student" 
-                   desc="Academic & Drafting Portal" 
-                   style="teal"
-                   onClick={() => handleRoleSelect('student')}
-                />
+                <RoleCard icon={Shield} title="Citizen" desc="Secure Grievance Filing" style="navy" onClick={() => handleRoleSelect('public')} />
+                <RoleCard icon={Gavel} title="Advocate" desc="Legal Practice Management" style="gold" onClick={() => handleRoleSelect('lawyer')} />
+                <RoleCard icon={GraduationCap} title="Student" desc="Academic & Drafting Portal" style="teal" onClick={() => handleRoleSelect('student')} />
              </div>
              
              <div className="text-center mt-12">
@@ -124,7 +144,6 @@ export default function Register() {
           </motion.div>
         )}
 
-        {/* --- STEP 2: THE FORM (Role Locked) --- */}
         {step === 2 && (
           <motion.div 
             key="step2"
@@ -133,11 +152,9 @@ export default function Register() {
             exit={{ opacity: 0, scale: 0.95 }}
             className={`max-w-3xl w-full relative rounded-3xl overflow-hidden border-2 ${theme.card}`}
           >
-             {/* Top Strip */}
              <div className={`absolute top-0 left-0 w-full h-3 ${role === 'lawyer' ? 'bg-[#D4AF37]' : (role === 'student' ? 'bg-teal-400' : 'bg-blue-500')}`}></div>
 
              <div className="p-8 md:p-12 relative z-10">
-                {/* Back button only if they didn't come from Landing Page */}
                 {!urlRole && (
                     <button onClick={() => setStep(1)} className={`absolute top-8 left-8 p-2 rounded-full hover:bg-white/10 transition-colors ${theme.text}`}>
                         <ArrowLeft size={32} />
@@ -156,24 +173,23 @@ export default function Register() {
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <InputGroup label="Full Name" icon={User} placeholder="e.g. Aditi Rao" theme={theme} />
-                      <InputGroup label="Phone Number" icon={Phone} placeholder="+91 98765 43210" theme={theme} />
+                      <InputGroup name="fullName" value={formData.fullName} onChange={handleInputChange} label="Full Name" icon={User} placeholder="e.g. Aditi Rao" theme={theme} />
+                      <InputGroup name="phone" value={formData.phone} onChange={handleInputChange} label="Phone Number" icon={Phone} placeholder="+91 98765 43210" theme={theme} />
                    </div>
                    
-                   <InputGroup label="Email Address" icon={Mail} placeholder="name@example.com" theme={theme} type="email" />
-                   <InputGroup label="Current City" icon={MapPin} placeholder="e.g. Mumbai" theme={theme} />
+                   <InputGroup name="email" value={formData.email} onChange={handleInputChange} label="Email Address" icon={Mail} placeholder="name@example.com" theme={theme} type="email" />
+                   <InputGroup name="city" value={formData.city} onChange={handleInputChange} label="Current City" icon={MapPin} placeholder="e.g. Mumbai" theme={theme} />
 
-                   {/* --- DYNAMIC ROLE SPECIFIC FIELDS --- */}
                    <AnimatePresence>
                        {role === 'student' && (
                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="p-6 bg-teal-900/40 rounded-2xl border border-teal-500/30 space-y-6">
                               <h4 className="text-sm font-bold text-teal-200 uppercase tracking-widest flex items-center gap-2">
                                  <GraduationCap size={18}/> Academic Verification
                               </h4>
-                              <InputGroup label="University Name" icon={GraduationCap} placeholder="e.g. NLSIU Bangalore" theme={theme} />
+                              <InputGroup name="university" value={formData.university} onChange={handleInputChange} label="University Name" icon={GraduationCap} placeholder="e.g. NLSIU Bangalore" theme={theme} />
                               <div className="grid grid-cols-2 gap-6">
-                                 <InputGroup label="Year" icon={CheckCircle} placeholder="e.g. 3rd" theme={theme} />
-                                 <InputGroup label="Enrollment No" icon={User} placeholder="University ID" theme={theme} />
+                                 <InputGroup name="year" value={formData.year} onChange={handleInputChange} label="Year" icon={CheckCircle} placeholder="e.g. 3rd" theme={theme} />
+                                 <InputGroup name="studentId" value={formData.studentId} onChange={handleInputChange} label="Enrollment No" icon={User} placeholder="University ID" theme={theme} />
                               </div>
                           </motion.div>
                        )}
@@ -183,17 +199,19 @@ export default function Register() {
                               <h4 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
                                  <Gavel size={18}/> Bar Council Data
                               </h4>
-                              <InputGroup label="Bar Enrollment No." icon={FileText} placeholder="MAH/1234/2020" theme={theme} />
-                              <InputGroup label="Practicing Court" icon={MapPin} placeholder="e.g. High Court of Bombay" theme={theme} />
+                              <InputGroup name="barEnrollment" value={formData.barEnrollment} onChange={handleInputChange} label="Bar Enrollment No." icon={FileText} placeholder="MAH/1234/2020" theme={theme} />
+                              <InputGroup name="practicingCourt" value={formData.practicingCourt} onChange={handleInputChange} label="Practicing Court" icon={MapPin} placeholder="e.g. High Court of Bombay" theme={theme} />
                           </motion.div>
                        )}
                    </AnimatePresence>
                    
-                   {/* Password Section */}
+                   {/* 3. ADDED CONFIRM PASSWORD INPUT HERE */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <InputGroup label="Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
-                       <InputGroup label="Confirm Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
+                       <InputGroup name="password" value={formData.password} onChange={handleInputChange} label="Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
+                       <InputGroup name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} label="Confirm Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
                    </div>
+
+                   {error && <p className="text-red-400 font-bold text-center bg-red-900/20 p-3 rounded-lg border border-red-500/50">{error}</p>}
 
                    <Button className={`w-full h-16 text-xl shadow-xl mt-8 rounded-2xl ${theme.accent} transition-transform active:scale-95`} disabled={loading}>
                       {loading ? <Loader2 className="animate-spin mr-3" size={24} /> : "Finalize Registration"}
@@ -204,7 +222,6 @@ export default function Register() {
           </motion.div>
         )}
 
-        {/* --- STEP 3: THE ULTIMATE CARD REVEAL --- */}
         {step === 3 && (
             <motion.div 
                key="step3"
@@ -220,22 +237,19 @@ export default function Register() {
                  transition={{ delay: 0.2 }}
                  className="mb-10 text-center"
                >
-                   <h2 className="text-6xl font-serif font-bold text-slate-900 mb-4 drop-shadow-sm">Welcome to J.A.I</h2>
+                   <h2 className="text-6xl font-serif font-bold text-slate-900 mb-4 drop-shadow-sm">Welcome to J.A.I - S.E.T.H.U</h2>
                    <p className="text-slate-500 text-2xl font-medium">Your identity has been cryptographically secured.</p>
                </motion.div>
 
-               {/* THE CARD REVEAL */}
                <motion.div 
                   initial={{ rotateY: 90, opacity: 0 }}
                   animate={{ rotateY: 0, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 60, damping: 12, delay: 0.5 }}
+                  transition={{ type: "spring", stiffness: 50, damping: 12, delay: 0.5 }}
                   className={`relative w-full max-w-lg aspect-[1.586/1] rounded-[2rem] shadow-2xl overflow-hidden text-left p-8 flex flex-col justify-between border-4 ${role === 'lawyer' ? 'bg-black border-[#D4AF37] shadow-[#D4AF37]/30' : (role === 'student' ? 'bg-teal-900 border-teal-500 shadow-teal-500/30' : 'bg-blue-900 border-blue-500 shadow-blue-500/30')}`}
                >
-                  {/* Background Patterns */}
                   <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
                   <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-40 ${role === 'lawyer' ? 'bg-[#D4AF37]' : 'bg-white'}`}></div>
 
-                  {/* Header */}
                   <div className="relative z-10 flex justify-between items-start">
                      <div>
                         <p className={`text-xs font-bold uppercase tracking-[0.3em] ${role === 'lawyer' ? 'text-[#D4AF37]' : 'text-white/70'}`}>Official Identity Card</p>
@@ -244,11 +258,10 @@ export default function Register() {
                      {role === 'lawyer' ? <Gavel className="text-[#D4AF37]" size={40} /> : (role === 'student' ? <GraduationCap className="text-teal-400" size={40} /> : <Shield className="text-blue-400" size={40} />)}
                   </div>
 
-                  {/* Details */}
                   <div className="relative z-10 grid grid-cols-2 gap-4 mt-8">
                      <div>
                         <p className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Name</p>
-                        <p className="text-xl font-bold text-white">Aditi Rao</p>
+                        <p className="text-xl font-bold text-white truncate">{formData.fullName || 'User Name'}</p>
                      </div>
                      <div>
                         <p className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Role</p>
@@ -256,7 +269,7 @@ export default function Register() {
                      </div>
                      <div>
                         <p className="text-[10px] text-white/50 uppercase font-bold tracking-widest">JAI-ID</p>
-                        <p className="text-xl font-mono font-bold text-white tracking-widest">USR-8821-X</p>
+                        <p className="text-xl font-mono font-bold text-white tracking-widest">USR-{Math.floor(1000 + Math.random() * 9000)}-X</p>
                      </div>
                      <div className="flex items-end justify-end">
                         <QrCode className="text-white/80" size={48} />
@@ -282,8 +295,6 @@ export default function Register() {
     </div>
   );
 }
-
-// --- SUB-COMPONENTS (Clean & Consistent) ---
 
 function RoleCard({ icon: Icon, title, desc, style, onClick }: any) {
     const styles = {
@@ -319,7 +330,7 @@ function RoleCard({ icon: Icon, title, desc, style, onClick }: any) {
     );
 }
 
-function InputGroup({ label, icon: Icon, placeholder, theme, type = "text" }: any) {
+function InputGroup({ label, icon: Icon, placeholder, theme, type = "text", name, value, onChange }: any) {
     return (
         <div className="space-y-2 group">
             <label className={`text-sm font-bold uppercase tracking-widest ml-1 ${theme.subText} opacity-90`}>{label}</label>
@@ -327,6 +338,9 @@ function InputGroup({ label, icon: Icon, placeholder, theme, type = "text" }: an
                 <Icon size={22} className={`absolute left-5 top-[1.1rem] transition-colors ${theme.icon} z-10`} />
                 <Input 
                    type={type}
+                   name={name} 
+                   value={value} 
+                   onChange={onChange} 
                    placeholder={placeholder} 
                    className={`pl-14 h-16 text-lg rounded-2xl transition-all border-2 ${theme.inputBg} focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent ${theme.ring}`}
                 />
