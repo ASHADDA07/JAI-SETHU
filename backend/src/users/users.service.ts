@@ -42,45 +42,44 @@ export class UsersService {
     });
   }
 
+  // ✅ Upgraded updateUser function to handle related tables securely
   async updateUser(id: string, data: any) {
     const { 
-      barLicenseNo, specialization, courtJurisdiction, 
-      university, yearOfStudy, studentIdCard, 
-      ...userFields 
+      fullName, phone, location, 
+      barEnrollmentNo, practicingCourt, specialization, 
+      university, year 
     } = data;
 
     return this.prisma.user.update({
       where: { id },
       data: {
-        ...userFields,
-        lawyerProfile: (barLicenseNo || specialization || courtJurisdiction) ? {
-          upsert: {
-            create: {
-              barLicenseNo: barLicenseNo || '',
-              specialization: specialization || [],
-              courtJurisdiction: courtJurisdiction || []
-            },
-            update: {
-              barLicenseNo: barLicenseNo,
-              specialization: specialization,
-              courtJurisdiction: courtJurisdiction
+        fullName,
+        phone,
+        location,
+        // If it's a lawyer, update or create their lawyer profile
+        ...(barEnrollmentNo && {
+          lawyerProfile: {
+            upsert: {
+              create: { barEnrollmentNo, practicingCourt, specialization },
+              update: { barEnrollmentNo, practicingCourt, specialization }
             }
           }
-        } : undefined,
-        studentProfile: (university || yearOfStudy) ? {
-          upsert: {
-            create: {
-              university: university || '',
-              yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : 1
-            },
-            update: {
-              university: university,
-              yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : undefined
+        }),
+        // If it's a student, update or create their student profile
+        ...(university && {
+          studentProfile: {
+            upsert: {
+              create: { university, year: String(year) },
+              update: { university, year: String(year) }
             }
           }
-        } : undefined,
+        })
       },
-      include: { lawyerProfile: true, studentProfile: true }
+      // Return the newly updated profile data
+      include: {
+        lawyerProfile: true,
+        studentProfile: true
+      }
     });
   }
 
@@ -97,4 +96,4 @@ export class UsersService {
       }
     });
   }
-}
+} 

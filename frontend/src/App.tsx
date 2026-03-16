@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import IncidentWizard from './pages/public/IncidentWizard';
+import RoleProtectedRoute from './router/RoleProtectedRoute'; // The Bouncer!
 
 // Pages
 import Landing from './pages/landing/Landing';
@@ -40,43 +41,60 @@ export default function App() {
     <LanguageProvider>
       <BrowserRouter>
         <Routes>
-          {/* 1. CORE ROUTES */}
+          {/* 1. OPEN ROUTES (No login required to see these) */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
-          {/* Dynamic Register Route */}
           <Route path="/:role/register" element={<Register />} />
           <Route path="/incident/new" element={<IncidentWizard />} />
 
-          {/* 2. LAWYER ROUTES (Fixed Path: /lawyer -> /lawyer/dashboard) */}
-          <Route path="/lawyer/dashboard" element={<LawyerDashboard />} />
-          <Route path="/lawyer/intake" element={<ClientIntake />} />
-          <Route path="/lawyer/draft" element={<DraftAssistant />} />
-          <Route path="/lawyer/messages" element={<LawyerMessages />} />
-          <Route path="/lawyer/associates" element={<AssociateTeam />} />
-          <Route path="/lawyer/profile" element={<ProfileSettings role="lawyer" />} />
+          {/* ======================================= */}
+          {/* 🔒 LAWYER ONLY ROUTES                     */}
+          {/* ======================================= */}
+          <Route element={<RoleProtectedRoute allowedRoles={['lawyer']} />}>
+            <Route path="/lawyer/dashboard" element={<LawyerDashboard />} />
+            <Route path="/lawyer/intake" element={<ClientIntake />} />
+            <Route path="/lawyer/draft" element={<DraftAssistant />} />
+            <Route path="/lawyer/messages" element={<LawyerMessages />} />
+            <Route path="/lawyer/associates" element={<AssociateTeam />} />
+            <Route path="/lawyer/profile" element={<ProfileSettings role="lawyer" />} />
+          </Route>
 
-          {/* 3. STUDENT ROUTES (Fixed Path: /student -> /student/workspace) */}
-          <Route path="/student/workspace" element={<StudyWorkspace />} />
-          <Route path="/student/practice" element={<DraftPractice />} />
-          <Route path="/student/notes" element={<StudentNotes />} />
-          <Route path="/student/profile" element={<ProfileSettings role="student" />} />
-          <Route path="/student/network" element={<StudentNetwork />} />
-          <Route path="/student/messages" element={<StudentMessages />} />
+          {/* ======================================= */}
+          {/* 🔒 STUDENT ONLY ROUTES                    */}
+          {/* ======================================= */}
+          <Route element={<RoleProtectedRoute allowedRoles={['student']} />}>
+            <Route path="/student/workspace" element={<StudyWorkspace />} />
+            <Route path="/student/practice" element={<DraftPractice />} />
+            <Route path="/student/notes" element={<StudentNotes />} />
+            <Route path="/student/profile" element={<ProfileSettings role="student" />} />
+            <Route path="/student/network" element={<StudentNetwork />} />
+            <Route path="/student/messages" element={<StudentMessages />} />
+          </Route>
+
+          {/* ======================================= */}
+          {/* 🔒 PUBLIC CLIENT ONLY ROUTES              */}
+          {/* ======================================= */}
+          <Route element={<RoleProtectedRoute allowedRoles={['public']} />}>
+            <Route path="/public/dashboard" element={<PublicDashboard />} />
+            <Route path="/public/vault" element={<EvidenceVault />} />
+            <Route path="/public/ai" element={<AIConsultant />} />
+            <Route path="/public/connect" element={<ConnectLawyer />} />
+            <Route path="/public/messages" element={<PublicMessages />} />
+            <Route path="/public/profile" element={<ProfileSettings role="public" />} />
+          </Route>
+
+          {/* ======================================= */}
+          {/* 🔒 ADMIN & FOUNDER ROUTES                 */}
+          {/* ======================================= */}
+          <Route element={<RoleProtectedRoute allowedRoles={['admin']} />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
           
-          {/* 4. PUBLIC ROUTES (Fixed Path: /public -> /public/dashboard) */}
-          <Route path="/public/dashboard" element={<PublicDashboard />} />
-          <Route path="/public/vault" element={<EvidenceVault />} />
-          <Route path="/public/ai" element={<AIConsultant />} />
-          <Route path="/public/connect" element={<ConnectLawyer />} />
-          <Route path="/public/messages" element={<PublicMessages />} />
-          <Route path="/public/profile" element={<ProfileSettings role="public" />} />
-          
-          {/* 5. ADMIN/FOUNDER */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/founder" element={<FounderDashboard />} />
-          
+          <Route element={<RoleProtectedRoute allowedRoles={['founder']} />}>
+            <Route path="/founder" element={<FounderDashboard />} />
+          </Route>
+
           {/* Catch All - Redirects unknown pages to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

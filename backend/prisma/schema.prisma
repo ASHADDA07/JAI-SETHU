@@ -1,11 +1,9 @@
-// S:\JAI-SETHU\backend\prisma\schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // Change to "mysql" if you are using MySQL
+  provider = "postgresql" 
   url      = env("DATABASE_URL")
 }
 
@@ -17,57 +15,67 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  fullName  String?
-  role      Role     @default(PUBLIC)
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Profile Relations
-  lawyerProfile  LawyerProfile?
-  studentProfile StudentProfile?
-
-  // App Relations
+  id               String           @id @default(uuid())
+  email            String           @unique
+  password         String
+  fullName         String?
+  role             Role             @default(PUBLIC)
+  avatar           String?
+  phone            String?
+  location         String?
+  jaiId            String?          @unique
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  lawyerProfile    LawyerProfile?
+  studentProfile   StudentProfile?
   cases            Case[]
-  sentMessages     Message[]     @relation("SentMessages")
-  receivedMessages Message[]     @relation("ReceivedMessages")
+  sentMessages     Message[]        @relation("SentMessages")
+  receivedMessages Message[]        @relation("ReceivedMessages")
   auditLogs        AuditLog[]
+  events           Event[]
 }
 
 model LawyerProfile {
-  id              String @id @default(uuid())
+  id              String  @id @default(uuid())
   barEnrollmentNo String
   practicingCourt String
   specialization  String?
   experience      Int?
-  
-  userId          String @unique
-  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StudentProfile {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   university   String
   year         String
   enrollmentNo String?
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  userId       String @unique
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  date        String
+  time        String
+  type        String
+  location    String?
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Case {
   id          String   @id @default(uuid())
   title       String
   description String
-  status      String   @default("PENDING") // PENDING, ACCEPTED, CLOSED
-  category    String   @default("GENERAL") // Added this field
-  
+  status      String   @default("PENDING") 
+  category    String   @default("GENERAL") 
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -75,13 +83,10 @@ model Case {
 model Message {
   id         String   @id @default(uuid())
   content    String
-  
   senderId   String
   sender     User     @relation("SentMessages", fields: [senderId], references: [id])
-  
-  receiverId String   // Added this field
+  receiverId String   
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  
   createdAt  DateTime @default(now())
 }
 
@@ -89,12 +94,10 @@ model AuditLog {
   id        String   @id @default(uuid())
   action    String
   details   String?
-  targetId  String?  // Needed for newCase.id
-  newValue  String?  // <--- Add this
-  hash      String?  // <--- Add this
-  
+  targetId  String?  
+  newValue  String?  
+  hash      String?  
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  
   createdAt DateTime @default(now())
 }

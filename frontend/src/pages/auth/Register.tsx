@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Shield, GraduationCap, Gavel, CheckCircle, ArrowRight, MapPin, Phone, Mail, User, Loader2, ArrowLeft, Lock, FileText, QrCode } from 'lucide-react';
+import { Shield, GraduationCap, Gavel, CheckCircle, ArrowRight, MapPin, Phone, Mail, User, Loader2, ArrowLeft, Lock, FileText, QrCode, Link as LinkIcon } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:3000';
@@ -44,18 +44,21 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   
   const urlRole = searchParams.get('role') as 'public' | 'student' | 'lawyer';
+  const inviteRef = searchParams.get('ref'); 
   
-  const [step, setStep] = useState(urlRole ? 2 : 1); 
-  const [role, setRole] = useState<'public' | 'student' | 'lawyer'>(urlRole || 'public');
+  const [step, setStep] = useState(urlRole || inviteRef ? 2 : 1); 
+  const [role, setRole] = useState<'public' | 'student' | 'lawyer'>(urlRole || (inviteRef ? 'student' : 'public'));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // ✅ Store the generated JAI-ID in state so it persists to the ID card
+  const [generatedJaiId, setGeneratedJaiId] = useState('');
 
-  // 1. ADDED confirmPassword HERE
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: '', // <--- NEW FIELD
+    confirmPassword: '', 
     phone: '',
     city: '',
     barEnrollment: '', 
@@ -88,12 +91,15 @@ export default function Register() {
     setLoading(true);
     setError('');
 
-    // 2. ADDED VALIDATION LOGIC HERE
     if (formData.password !== formData.confirmPassword) {
         setError("Passwords do not match!");
         setLoading(false);
         return;
     }
+
+    // ✅ Generate the Unique JAI-ID
+    const newJaiId = `JAI-${Math.floor(1000 + Math.random() * 9000)}-X`;
+    setGeneratedJaiId(newJaiId);
 
     try {
         await axios.post(`${API_URL}/auth/register`, {
@@ -101,6 +107,8 @@ export default function Register() {
             password: formData.password,
             fullName: formData.fullName,
             role: role.toUpperCase(), 
+            jaiId: newJaiId, // ✅ Send it to backend
+            invitedBy: inviteRef || null 
         });
 
         setStep(3);
@@ -117,7 +125,7 @@ export default function Register() {
       
       <AnimatePresence mode='wait'>
         
-        {step === 1 && !urlRole && (
+        {step === 1 && !urlRole && !inviteRef && (
           <motion.div 
             key="step1"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -155,18 +163,30 @@ export default function Register() {
              <div className={`absolute top-0 left-0 w-full h-3 ${role === 'lawyer' ? 'bg-[#D4AF37]' : (role === 'student' ? 'bg-teal-400' : 'bg-blue-500')}`}></div>
 
              <div className="p-8 md:p-12 relative z-10">
-                {!urlRole && (
+                {!urlRole && !inviteRef && (
                     <button onClick={() => setStep(1)} className={`absolute top-8 left-8 p-2 rounded-full hover:bg-white/10 transition-colors ${theme.text}`}>
                         <ArrowLeft size={32} />
                     </button>
                 )}
 
-                <div className="text-center mb-10 mt-6">
+                {inviteRef && (
+                  <div className="bg-white/10 border border-white/20 rounded-xl p-4 mb-6 flex items-center gap-3 backdrop-blur-sm">
+                    <div className={`p-2 rounded-full ${theme.bg}`}>
+                      <LinkIcon size={20} className={theme.icon} />
+                    </div>
+                    <div>
+                      <h4 className={`font-bold ${theme.text} text-sm uppercase tracking-wider`}>Firm Invitation Active</h4>
+                      <p className={`text-xs ${theme.subText}`}>You are registering via a secure link from an Advocate.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-center mb-10 mt-2">
                    <div className={`mx-auto w-24 h-24 rounded-3xl flex items-center justify-center mb-6 text-5xl shadow-2xl border-2 border-white/10 ${role === 'lawyer' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : (role === 'student' ? 'bg-teal-500/20 text-teal-300' : 'bg-blue-600/30 text-blue-300')}`}>
                       {role === 'lawyer' ? <Gavel size={48} /> : (role === 'student' ? <GraduationCap size={48} /> : <Shield size={48} />)}
                    </div>
                    <h2 className={`text-5xl font-serif font-bold ${theme.text}`}>
-                       {role === 'public' ? 'Citizen Portal' : (role === 'lawyer' ? 'Advocate Access' : 'Student Hub')}
+                       {role === 'public' ? 'Citizen Portal' : (role === 'lawyer' ? 'Advocate Access' : 'Associate Hub')}
                    </h2>
                    <p className={`mt-3 text-xl ${theme.subText} font-medium`}>Secure Blockchain Enrollment</p>
                 </div>
@@ -205,7 +225,6 @@ export default function Register() {
                        )}
                    </AnimatePresence>
                    
-                   {/* 3. ADDED CONFIRM PASSWORD INPUT HERE */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <InputGroup name="password" value={formData.password} onChange={handleInputChange} label="Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
                        <InputGroup name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} label="Confirm Password" icon={Lock} placeholder="••••••••" type="password" theme={theme} />
@@ -269,7 +288,8 @@ export default function Register() {
                      </div>
                      <div>
                         <p className="text-[10px] text-white/50 uppercase font-bold tracking-widest">JAI-ID</p>
-                        <p className="text-xl font-mono font-bold text-white tracking-widest">USR-{Math.floor(1000 + Math.random() * 9000)}-X</p>
+                        {/* ✅ Display the real generated JAI-ID */}
+                        <p className="text-xl font-mono font-bold text-white tracking-widest">{generatedJaiId}</p>
                      </div>
                      <div className="flex items-end justify-end">
                         <QrCode className="text-white/80" size={48} />

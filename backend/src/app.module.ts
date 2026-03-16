@@ -6,6 +6,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module'; // <--- The Lock System
 import { MessagesModule } from './messages/messages.module';
 import { CasesModule } from './cases/cases.module';
+import { AiModule } from './ai/ai.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -13,7 +15,7 @@ import { CasesModule } from './cases/cases.module';
     UsersModule,
     CasesModule,
     MessagesModule, 
-    AuthModule // <--- Plug it into the Car
+    AuthModule, AiModule, EventsModule // <--- Plug it into the Car
   ],
   controllers: [AppController],
   providers: [AppService],

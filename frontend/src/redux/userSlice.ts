@@ -1,12 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit'; // <--- The Fix is here
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-interface User {
+export interface User {
   id: string;
   fullName: string;
   email: string;
   role: 'LAWYER' | 'STUDENT' | 'PUBLIC' | 'ADMIN';
   avatar?: string;
+  jaiId?: string; // <--- ADDED THIS LINE TO FIX THE ERROR!
 }
 
 interface UserState {

@@ -15,6 +15,8 @@ async function bootstrap() {
   // 2. Enable Validation (Checks if email is real, password is long enough)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
+  app.enableCors();
+
   await app.listen(3000);
 }
 bootstrap();
